@@ -1,0 +1,47 @@
+[package]
+name = "tontine-protocol-v1"
+description = "A TON blockchain project"
+version = "0.1.0"
+license = "MIT"
+
+[toolchain]
+acton = "1.2.0"
+
+[contracts.Empty]
+display-name = "Empty"
+src = "contracts/src/Empty.tolk"
+depends = []
+
+[test]
+
+[fmt]
+width = 100
+ignore = []
+
+[scripts]
+deploy-emulation = "acton script contracts/scripts/deploy.tolk"
+deploy-testnet = "acton script contracts/scripts/deploy.tolk --net testnet"
+
+[import-mappings]
+acton = ".acton"
+contracts = "contracts/src"
+gen = "gen"
+tests = "contracts/tests"
+wrappers = "contracts/wrappers"
+
+# Check full Acton.toml reference and all available keys:
+# https://ton-blockchain.github.io/acton/docs/acton-toml
+
+[contracts.TontineCircle]
+src = "contracts/TontineCircle.tolk"
+
+[contracts.JettonWallet]
+display-name = "JettonWallet"
+src = "contracts/jetton/JettonWallet.tolk"
+depends = []
+
+[contracts.JettonMinter]
+display-name = "JettonMinter"
+src = "contracts/jetton/JettonMinter.tolk"
+depends = ["JettonWallet"]
+
