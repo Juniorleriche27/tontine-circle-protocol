@@ -60,6 +60,12 @@ enum TontineErrors {
     ProtocolFeeMembersNotSettled = 1412
 
     ReplayedQueryId = 1500
+    QueryIdOverflow = 1501
+
+    CircleWalletQueryMismatch = 1212
+    CircleWalletAlreadyResolved = 1213
+    CircleWalletNotResolved = 1214
+    CircleWalletLookupAlreadyPending = 1215
 
     InvalidMessage = 0xFFFF
 }
@@ -114,6 +120,9 @@ struct SettlementState {
 struct JettonMasterConfig {
     usdtMaster: address
     protocolTreasury: address
+    circleWalletLookupPending: bool
+    circleWalletResolved: bool
+    circleWalletQueryId: uint64
 }
 
 
@@ -142,8 +151,8 @@ struct TontineStorage {
     circleId: uint64
     controller: address
 
-    // Jetton Wallet USDT appartenant à ce contrat.
-    usdtWallet: address
+    // Jetton Wallet USDT appartenant à ce contrat (résolu auprès du usdtMaster).
+    usdtWallet: address?
 
     protocolState: Cell<ProtocolState>
     // 0 = DRAFT
@@ -192,9 +201,9 @@ struct (0x41444D42) AddMember {
     assignedRound: uint8
 }
 
-struct (0x53544A57) SetCircleJettonWallet {
+// 0x52434A57 = "RCJW" (Resolve Circle Jetton Wallet)
+struct (0x52434A57) BeginCircleJettonWalletResolution {
     queryId: uint64
-    wallet: address
 }
 
 

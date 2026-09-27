@@ -39,6 +39,9 @@ fun setupTest(): (
                     testing.treasury("usdt-master").address,
                 protocolTreasury:
                     testing.treasury("protocol-treasury").address,
+                circleWalletLookupPending: false,
+                circleWalletResolved: true,
+                circleWalletQueryId: 0,
             }.toCell(),
 
             settlement: (SettlementState {
@@ -267,7 +270,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-1"),
-        3001,
+        1,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -275,7 +278,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-2"),
-        3002,
+        2,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -283,7 +286,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-3"),
-        3003,
+        3,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -291,7 +294,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-4"),
-        3004,
+        4,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -299,7 +302,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-5"),
-        3005,
+        5,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -307,7 +310,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-6"),
-        3006,
+        6,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -315,7 +318,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-7"),
-        3007,
+        7,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -323,7 +326,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-8"),
-        3008,
+        8,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -331,7 +334,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-9"),
-        3009,
+        9,
     );
 
     fundFullRoundOne(contract, usdtWallet, alice, bob);
@@ -339,7 +342,7 @@ fun completeCircleForSettlement(
         contract,
         controller,
         testing.treasury("settlement-payout-wallet-10"),
-        3010,
+        10,
     );
 }
 
@@ -499,7 +502,7 @@ fun completeAllMemberSettlements(
         contract,
         alice,
         testing.treasury("fees-final-wallet-alice"),
-        5001,
+        11,
         180000000,
     );
 
@@ -507,7 +510,7 @@ fun completeAllMemberSettlements(
         contract,
         bob,
         testing.treasury("fees-final-wallet-bob"),
-        5002,
+        12,
         160000000,
     );
 
@@ -515,7 +518,7 @@ fun completeAllMemberSettlements(
         contract,
         m3,
         testing.treasury("fees-final-wallet-m3"),
-        5003,
+        13,
         140000000,
     );
 
@@ -523,7 +526,7 @@ fun completeAllMemberSettlements(
         contract,
         m4,
         testing.treasury("fees-final-wallet-m4"),
-        5004,
+        14,
         120000000,
     );
 
@@ -531,7 +534,7 @@ fun completeAllMemberSettlements(
         contract,
         m5,
         testing.treasury("fees-final-wallet-m5"),
-        5005,
+        15,
         100000000,
     );
 
@@ -539,7 +542,7 @@ fun completeAllMemberSettlements(
         contract,
         m6,
         testing.treasury("fees-final-wallet-m6"),
-        5006,
+        16,
         80000000,
     );
 
@@ -547,7 +550,7 @@ fun completeAllMemberSettlements(
         contract,
         m7,
         testing.treasury("fees-final-wallet-m7"),
-        5007,
+        17,
         60000000,
     );
 
@@ -555,7 +558,7 @@ fun completeAllMemberSettlements(
         contract,
         m8,
         testing.treasury("fees-final-wallet-m8"),
-        5008,
+        18,
         40000000,
     );
 
@@ -563,7 +566,7 @@ fun completeAllMemberSettlements(
         contract,
         m9,
         testing.treasury("fees-final-wallet-m9"),
-        5009,
+        19,
         40000000,
     );
 
@@ -571,7 +574,7 @@ fun completeAllMemberSettlements(
         contract,
         m10,
         testing.treasury("fees-final-wallet-m10"),
-        5010,
+        20,
         40000000,
     );
 }
@@ -2023,7 +2026,7 @@ get fun `test prepare payout reserves 140 escrow 5 fee and 55 pending`() {
 
     val result = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(900),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2089,7 +2092,7 @@ get fun `test payout cannot be prepared twice`() {
 
     val first = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(910),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2100,7 +2103,7 @@ get fun `test payout cannot be prepared twice`() {
 
     val second = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(911),
+        makePreparePayoutMessage(2),
         { value: grams("0.1") }
     );
 
@@ -2166,7 +2169,7 @@ get fun `test dispatch payout sends 55 usdt jetton transfer`() {
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(900),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2190,7 +2193,7 @@ get fun `test dispatch payout sends 55 usdt jetton transfer`() {
 
     val lookup900 = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(900),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2201,7 +2204,7 @@ get fun `test dispatch payout sends 55 usdt jetton transfer`() {
 
     val response900 =
         ResponseWalletAddress {
-            queryId: 900,
+            queryId: 1,
             jettonWalletAddress:
                 beneficiaryWallet900.address,
             ownerAddress: alice.address.toCell(),
@@ -2224,7 +2227,7 @@ get fun `test dispatch payout sends 55 usdt jetton transfer`() {
 
     val dispatched = contract.sendAny(
         controller.address,
-        makeDispatchPayoutMessage(900),
+        makeDispatchPayoutMessage(1),
         { value: grams("0.15") }
     );
 
@@ -2243,7 +2246,7 @@ get fun `test dispatch payout sends 55 usdt jetton transfer`() {
 
     val body = transferTx!.loadBody<AskToTransfer>();
 
-    expect(body.queryId).toEqual(900);
+    expect(body.queryId).toEqual(1);
 
     // 55 USDT avec 6 décimales.
     expect(body.jettonAmount).toEqual(55000000);
@@ -2337,7 +2340,7 @@ get fun `test bounced payout transfer becomes dispatchable again`() {
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(901),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2358,7 +2361,7 @@ get fun `test bounced payout transfer becomes dispatchable again`() {
 
     val lookup901 = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(901),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2369,7 +2372,7 @@ get fun `test bounced payout transfer becomes dispatchable again`() {
 
     val response901 =
         ResponseWalletAddress {
-            queryId: 901,
+            queryId: 1,
             jettonWalletAddress:
                 beneficiaryWallet901.address,
             ownerAddress: alice.address.toCell(),
@@ -2392,7 +2395,7 @@ get fun `test bounced payout transfer becomes dispatchable again`() {
 
     val dispatched = contract.sendAny(
         controller.address,
-        makeDispatchPayoutMessage(901),
+        makeDispatchPayoutMessage(1),
         { value: grams("0.15") }
     );
 
@@ -2527,7 +2530,7 @@ get fun `test authoritative master resolves beneficiary jetton wallet`() {
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(902),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2543,7 +2546,7 @@ get fun `test authoritative master resolves beneficiary jetton wallet`() {
     // Demande de résolution.
     val lookup = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(902),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2563,7 +2566,7 @@ get fun `test authoritative master resolves beneficiary jetton wallet`() {
     val lookupBody =
         lookupTx!.loadBody<RequestWalletAddress>();
 
-    expect(lookupBody.queryId).toEqual(902);
+    expect(lookupBody.queryId).toEqual(1);
     expect(lookupBody.ownerAddress).toEqual(alice.address);
     expect(lookupBody.includeOwnerAddress).toBeTrue();
 
@@ -2573,7 +2576,7 @@ get fun `test authoritative master resolves beneficiary jetton wallet`() {
 
     // Réponse du Master USDT enregistré.
     val responseBody = ResponseWalletAddress {
-        queryId: 902,
+        queryId: 1,
         jettonWalletAddress: aliceUsdtWallet.address,
         ownerAddress: alice.address.toCell(),
     }.toCell();
@@ -2648,7 +2651,7 @@ get fun `test bounced wallet lookup can be retried`() {
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(903),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2659,7 +2662,7 @@ get fun `test bounced wallet lookup can be retried`() {
 
     val lookup = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(903),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2714,7 +2717,7 @@ get fun `test bounced wallet lookup can be retried`() {
     // Une nouvelle résolution est maintenant autorisée.
     val retry = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(903),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2771,7 +2774,7 @@ get fun `test payout cannot dispatch before beneficiary wallet resolution`() {
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(904),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2786,7 +2789,7 @@ get fun `test payout cannot dispatch before beneficiary wallet resolution`() {
 
     val rejected = contract.sendAny(
         controller.address,
-        makeDispatchPayoutMessage(904),
+        makeDispatchPayoutMessage(1),
         { value: grams("0.15") }
     );
 
@@ -2856,7 +2859,7 @@ get fun `test authenticated jetton excesses finalizes payout`() {
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(905),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2871,7 +2874,7 @@ get fun `test authenticated jetton excesses finalizes payout`() {
 
     val lookup = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(905),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -2881,7 +2884,7 @@ get fun `test authenticated jetton excesses finalizes payout`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 905,
+        queryId: 1,
         jettonWalletAddress: aliceUsdtWallet.address,
         ownerAddress: alice.address.toCell(),
     }.toCell();
@@ -2903,7 +2906,7 @@ get fun `test authenticated jetton excesses finalizes payout`() {
 
     val dispatched = contract.sendAny(
         controller.address,
-        makeDispatchPayoutMessage(905),
+        makeDispatchPayoutMessage(1),
         { value: grams("0.15") }
     );
 
@@ -2922,7 +2925,7 @@ get fun `test authenticated jetton excesses finalizes payout`() {
     // --------------------------------------------------------
 
     val excessesBody = ReturnExcessesBack {
-        queryId: 905,
+        queryId: 1,
     }.toCell();
 
     val confirmed = contract.sendAny(
@@ -3018,7 +3021,7 @@ get fun `test forged or mismatched excesses cannot finalize payout`() {
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(906),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -3029,7 +3032,7 @@ get fun `test forged or mismatched excesses cannot finalize payout`() {
 
     val lookup = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(906),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -3039,7 +3042,7 @@ get fun `test forged or mismatched excesses cannot finalize payout`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 906,
+        queryId: 1,
         jettonWalletAddress: aliceUsdtWallet.address,
         ownerAddress: alice.address.toCell(),
     }.toCell();
@@ -3057,7 +3060,7 @@ get fun `test forged or mismatched excesses cannot finalize payout`() {
 
     val dispatched = contract.sendAny(
         controller.address,
-        makeDispatchPayoutMessage(906),
+        makeDispatchPayoutMessage(1),
         { value: grams("0.15") }
     );
 
@@ -3071,7 +3074,7 @@ get fun `test forged or mismatched excesses cannot finalize payout`() {
     // --------------------------------------------------------
 
     val forgedBody = ReturnExcessesBack {
-        queryId: 906,
+        queryId: 1,
     }.toCell();
 
     val forged = contract.sendAny(
@@ -3220,7 +3223,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet1,
-        1001,
+        1,
     );
 
     expect(contract.memberBeneficiaryPaid(alice.address))
@@ -3247,7 +3250,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet2,
-        1002,
+        2,
     );
 
     expect(contract.memberBeneficiaryPaid(bob.address))
@@ -3272,7 +3275,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet3,
-        1003,
+        3,
     );
 
     expect(contract.memberBeneficiaryPaid(m3.address))
@@ -3296,7 +3299,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet4,
-        1004,
+        4,
     );
 
     expect(contract.memberBeneficiaryPaid(m4.address))
@@ -3320,7 +3323,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet5,
-        1005,
+        5,
     );
 
     expect(contract.memberBeneficiaryPaid(m5.address))
@@ -3344,7 +3347,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet6,
-        1006,
+        6,
     );
 
     expect(contract.memberBeneficiaryPaid(m6.address))
@@ -3368,7 +3371,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet7,
-        1007,
+        7,
     );
 
     expect(contract.memberBeneficiaryPaid(m7.address))
@@ -3392,7 +3395,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet8,
-        1008,
+        8,
     );
 
     expect(contract.memberBeneficiaryPaid(m8.address))
@@ -3416,7 +3419,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet9,
-        1009,
+        9,
     );
 
     expect(contract.memberBeneficiaryPaid(m9.address))
@@ -3444,7 +3447,7 @@ get fun `test complete ten round tontine reaches completed state`() {
         contract,
         controller,
         payoutWallet10,
-        1010,
+        10,
     );
 
     expect(contract.memberBeneficiaryPaid(m10.address))
@@ -3755,7 +3758,7 @@ get fun `test completed member can begin settlement wallet resolution`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4001),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -3780,7 +3783,7 @@ get fun `test completed member can begin settlement wallet resolution`() {
         lookupTx!.loadBody<RequestWalletAddress>();
 
     expect(lookupBody.queryId)
-        .toEqual(4001);
+        .toEqual(11);
 
     expect(lookupBody.ownerAddress)
         .toEqual(alice.address);
@@ -3868,7 +3871,7 @@ get fun `test authoritative master resolves settlement jetton wallet`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4002),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -3886,7 +3889,7 @@ get fun `test authoritative master resolves settlement jetton wallet`() {
     ).toBeFalse();
 
     val responseBody = ResponseWalletAddress {
-        queryId: 4002,
+        queryId: 11,
         jettonWalletAddress:
             aliceSettlementWallet.address,
         ownerAddress: alice.address.toCell(),
@@ -3976,7 +3979,7 @@ get fun `test fake master cannot resolve settlement jetton wallet`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4003),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -3990,7 +3993,7 @@ get fun `test fake master cannot resolve settlement jetton wallet`() {
     // --------------------------------------------------------
 
     val forgedResponse = ResponseWalletAddress {
-        queryId: 4003,
+        queryId: 11,
         jettonWalletAddress: fakeWallet.address,
         ownerAddress: alice.address.toCell(),
     }.toCell();
@@ -4033,7 +4036,7 @@ get fun `test fake master cannot resolve settlement jetton wallet`() {
     // --------------------------------------------------------
 
     val realResponse = ResponseWalletAddress {
-        queryId: 4003,
+        queryId: 11,
         jettonWalletAddress: realAliceWallet.address,
         ownerAddress: alice.address.toCell(),
     }.toCell();
@@ -4100,7 +4103,7 @@ get fun `test bounced settlement wallet lookup can be retried`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4004),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -4182,7 +4185,7 @@ get fun `test bounced settlement wallet lookup can be retried`() {
 
     val bobRetry = contract.sendAny(
         bob.address,
-        makeRetrySettlementWalletMessage(4004),
+        makeRetrySettlementWalletMessage(11),
         { value: grams("0.1") }
     );
 
@@ -4202,7 +4205,7 @@ get fun `test bounced settlement wallet lookup can be retried`() {
 
     val retry = contract.sendAny(
         alice.address,
-        makeRetrySettlementWalletMessage(4004),
+        makeRetrySettlementWalletMessage(11),
         { value: grams("0.1") }
     );
 
@@ -4224,7 +4227,7 @@ get fun `test bounced settlement wallet lookup can be retried`() {
 
     expect(
         retryLookupBody.queryId
-    ).toEqual(4004);
+    ).toEqual(11);
 
     expect(
         retryLookupBody.ownerAddress
@@ -4291,7 +4294,7 @@ get fun `test settlement dispatch sends full bond and escrow`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4005),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -4301,7 +4304,7 @@ get fun `test settlement dispatch sends full bond and escrow`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 4005,
+        queryId: 11,
         jettonWalletAddress:
             aliceSettlementWallet.address,
         ownerAddress: alice.address.toCell(),
@@ -4320,7 +4323,7 @@ get fun `test settlement dispatch sends full bond and escrow`() {
 
     val dispatched = contract.sendAny(
         alice.address,
-        makeDispatchSettlementMessage(4005),
+        makeDispatchSettlementMessage(11),
         { value: grams("0.15") }
     );
 
@@ -4341,7 +4344,7 @@ get fun `test settlement dispatch sends full bond and escrow`() {
         transferTx!.loadBody<AskToTransfer>();
 
     expect(transferBody.queryId)
-        .toEqual(4005);
+        .toEqual(11);
 
     expect(transferBody.jettonAmount)
         .toEqual(180000000);
@@ -4451,7 +4454,7 @@ get fun `test bounced settlement transfer becomes dispatchable again`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4006),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -4461,7 +4464,7 @@ get fun `test bounced settlement transfer becomes dispatchable again`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 4006,
+        queryId: 11,
         jettonWalletAddress:
             aliceSettlementWallet.address,
         ownerAddress: alice.address.toCell(),
@@ -4480,7 +4483,7 @@ get fun `test bounced settlement transfer becomes dispatchable again`() {
 
     val dispatched = contract.sendAny(
         alice.address,
-        makeDispatchSettlementMessage(4006),
+        makeDispatchSettlementMessage(11),
         { value: grams("0.15") }
     );
 
@@ -4559,7 +4562,7 @@ get fun `test bounced settlement transfer becomes dispatchable again`() {
 
     val retry = contract.sendAny(
         alice.address,
-        makeDispatchSettlementMessage(4006),
+        makeDispatchSettlementMessage(11),
         { value: grams("0.15") }
     );
 
@@ -4620,7 +4623,7 @@ get fun `test authenticated settlement excesses releases bond and escrow`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4007),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -4634,7 +4637,7 @@ get fun `test authenticated settlement excesses releases bond and escrow`() {
     // --------------------------------------------------------
 
     val responseBody = ResponseWalletAddress {
-        queryId: 4007,
+        queryId: 11,
         jettonWalletAddress:
             aliceSettlementWallet.address,
         ownerAddress: alice.address.toCell(),
@@ -4657,7 +4660,7 @@ get fun `test authenticated settlement excesses releases bond and escrow`() {
 
     val dispatched = contract.sendAny(
         alice.address,
-        makeDispatchSettlementMessage(4007),
+        makeDispatchSettlementMessage(11),
         { value: grams("0.15") }
     );
 
@@ -4685,7 +4688,7 @@ get fun `test authenticated settlement excesses releases bond and escrow`() {
     // --------------------------------------------------------
 
     val excessesBody = ReturnExcessesBack {
-        queryId: 4007,
+        queryId: 11,
     }.toCell();
 
     val confirmed = contract.sendAny(
@@ -4737,7 +4740,7 @@ get fun `test authenticated settlement excesses releases bond and escrow`() {
 
     val duplicateClaim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4008),
+        makeBeginSettlementMessage(12),
         { value: grams("0.1") }
     );
 
@@ -4758,7 +4761,7 @@ get fun `test authenticated settlement excesses releases bond and escrow`() {
 
     val bobClaim = contract.sendAny(
         bob.address,
-        makeBeginSettlementMessage(4009),
+        makeBeginSettlementMessage(12),
         { value: grams("0.1") }
     );
 
@@ -4824,7 +4827,7 @@ get fun `test forged settlement excesses cannot release member funds`() {
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4010),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -4834,7 +4837,7 @@ get fun `test forged settlement excesses cannot release member funds`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 4010,
+        queryId: 11,
         jettonWalletAddress:
             aliceSettlementWallet.address,
         ownerAddress: alice.address.toCell(),
@@ -4853,7 +4856,7 @@ get fun `test forged settlement excesses cannot release member funds`() {
 
     val dispatched = contract.sendAny(
         alice.address,
-        makeDispatchSettlementMessage(4010),
+        makeDispatchSettlementMessage(11),
         { value: grams("0.15") }
     );
 
@@ -4867,7 +4870,7 @@ get fun `test forged settlement excesses cannot release member funds`() {
     // --------------------------------------------------------
 
     val forgedBody = ReturnExcessesBack {
-        queryId: 4010,
+        queryId: 11,
     }.toCell();
 
     val forged = contract.sendAny(
@@ -4992,7 +4995,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         alice,
         testing.treasury("final-wallet-alice"),
-        5001,
+        11,
         180000000,
     );
 
@@ -5004,7 +5007,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         bob,
         testing.treasury("final-wallet-bob"),
-        5002,
+        12,
         160000000,
     );
 
@@ -5016,7 +5019,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m3,
         testing.treasury("final-wallet-m3"),
-        5003,
+        13,
         140000000,
     );
 
@@ -5028,7 +5031,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m4,
         testing.treasury("final-wallet-m4"),
-        5004,
+        14,
         120000000,
     );
 
@@ -5040,7 +5043,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m5,
         testing.treasury("final-wallet-m5"),
-        5005,
+        15,
         100000000,
     );
 
@@ -5052,7 +5055,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m6,
         testing.treasury("final-wallet-m6"),
-        5006,
+        16,
         80000000,
     );
 
@@ -5064,7 +5067,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m7,
         testing.treasury("final-wallet-m7"),
-        5007,
+        17,
         60000000,
     );
 
@@ -5076,7 +5079,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m8,
         testing.treasury("final-wallet-m8"),
-        5008,
+        18,
         40000000,
     );
 
@@ -5088,7 +5091,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m9,
         testing.treasury("final-wallet-m9"),
-        5009,
+        19,
         40000000,
     );
 
@@ -5100,7 +5103,7 @@ get fun `test all ten members complete final settlement`() {
         contract,
         m10,
         testing.treasury("final-wallet-m10"),
-        5010,
+        20,
         40000000,
     );
 
@@ -5234,7 +5237,7 @@ get fun `test protocol treasury can begin fee wallet resolution`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6001),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -5256,7 +5259,7 @@ get fun `test protocol treasury can begin fee wallet resolution`() {
 
     expect(
         lookupBody.queryId
-    ).toEqual(6001);
+    ).toEqual(21);
 
     expect(
         lookupBody.ownerAddress
@@ -5299,7 +5302,7 @@ get fun `test protocol treasury can begin fee wallet resolution`() {
 
     val conflictingSettlement = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(6002),
+        makeBeginSettlementMessage(22),
         { value: grams("0.1") }
     );
 
@@ -5379,7 +5382,7 @@ get fun `test authoritative master resolves protocol treasury jetton wallet`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6003),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -5397,7 +5400,7 @@ get fun `test authoritative master resolves protocol treasury jetton wallet`() {
     ).toBeFalse();
 
     val responseBody = ResponseWalletAddress {
-        queryId: 6003,
+        queryId: 21,
         jettonWalletAddress:
             treasuryJettonWallet.address,
         ownerAddress: protocolTreasury.address.toCell(),
@@ -5493,7 +5496,7 @@ get fun `test fake master cannot resolve protocol treasury jetton wallet`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6004),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -5507,7 +5510,7 @@ get fun `test fake master cannot resolve protocol treasury jetton wallet`() {
     // --------------------------------------------------------
 
     val forgedBody = ResponseWalletAddress {
-        queryId: 6004,
+        queryId: 21,
         jettonWalletAddress:
             fakeWallet.address,
         ownerAddress: protocolTreasury.address.toCell(),
@@ -5542,7 +5545,7 @@ get fun `test fake master cannot resolve protocol treasury jetton wallet`() {
     // --------------------------------------------------------
 
     val realBody = ResponseWalletAddress {
-        queryId: 6004,
+        queryId: 21,
         jettonWalletAddress:
             realWallet.address,
         ownerAddress: protocolTreasury.address.toCell(),
@@ -5628,7 +5631,7 @@ get fun `test protocol fee withdrawal dispatch sends fifty usdt`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6005),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -5638,7 +5641,7 @@ get fun `test protocol fee withdrawal dispatch sends fifty usdt`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 6005,
+        queryId: 21,
         jettonWalletAddress:
             treasuryJettonWallet.address,
         ownerAddress: protocolTreasury.address.toCell(),
@@ -5657,7 +5660,7 @@ get fun `test protocol fee withdrawal dispatch sends fifty usdt`() {
 
     val dispatched = contract.sendAny(
         protocolTreasury.address,
-        makeDispatchProtocolFeeWithdrawalMessage(6005),
+        makeDispatchProtocolFeeWithdrawalMessage(21),
         { value: grams("0.15") }
     );
 
@@ -5679,7 +5682,7 @@ get fun `test protocol fee withdrawal dispatch sends fifty usdt`() {
 
     expect(
         transferBody.queryId
-    ).toEqual(6005);
+    ).toEqual(21);
 
     expect(
         transferBody.jettonAmount
@@ -5798,7 +5801,7 @@ get fun `test bounced protocol fee transfer becomes dispatchable again`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6006),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -5808,7 +5811,7 @@ get fun `test bounced protocol fee transfer becomes dispatchable again`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 6006,
+        queryId: 21,
         jettonWalletAddress:
             treasuryJettonWallet.address,
         ownerAddress: protocolTreasury.address.toCell(),
@@ -5827,7 +5830,7 @@ get fun `test bounced protocol fee transfer becomes dispatchable again`() {
 
     val dispatched = contract.sendAny(
         protocolTreasury.address,
-        makeDispatchProtocolFeeWithdrawalMessage(6006),
+        makeDispatchProtocolFeeWithdrawalMessage(21),
         { value: grams("0.15") }
     );
 
@@ -5897,7 +5900,7 @@ get fun `test bounced protocol fee transfer becomes dispatchable again`() {
 
     val retry = contract.sendAny(
         protocolTreasury.address,
-        makeDispatchProtocolFeeWithdrawalMessage(6006),
+        makeDispatchProtocolFeeWithdrawalMessage(21),
         { value: grams("0.15") }
     );
 
@@ -5966,7 +5969,7 @@ get fun `test bounced protocol fee wallet lookup can be retried`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6007),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -6036,7 +6039,7 @@ get fun `test bounced protocol fee wallet lookup can be retried`() {
 
     val retry = contract.sendAny(
         protocolTreasury.address,
-        makeRetryProtocolFeeWalletMessage(6007),
+        makeRetryProtocolFeeWalletMessage(21),
         { value: grams("0.1") }
     );
 
@@ -6058,7 +6061,7 @@ get fun `test bounced protocol fee wallet lookup can be retried`() {
 
     expect(
         retryLookupBody.queryId
-    ).toEqual(6007);
+    ).toEqual(21);
 
     expect(
         retryLookupBody.ownerAddress
@@ -6137,7 +6140,7 @@ get fun `test authenticated protocol fee excesses finalizes withdrawal`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6008),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -6151,7 +6154,7 @@ get fun `test authenticated protocol fee excesses finalizes withdrawal`() {
     // --------------------------------------------------------
 
     val responseBody = ResponseWalletAddress {
-        queryId: 6008,
+        queryId: 21,
         jettonWalletAddress:
             treasuryJettonWallet.address,
         ownerAddress: protocolTreasury.address.toCell(),
@@ -6174,7 +6177,7 @@ get fun `test authenticated protocol fee excesses finalizes withdrawal`() {
 
     val dispatched = contract.sendAny(
         protocolTreasury.address,
-        makeDispatchProtocolFeeWithdrawalMessage(6008),
+        makeDispatchProtocolFeeWithdrawalMessage(21),
         { value: grams("0.15") }
     );
 
@@ -6197,7 +6200,7 @@ get fun `test authenticated protocol fee excesses finalizes withdrawal`() {
     // --------------------------------------------------------
 
     val excessesBody = ReturnExcessesBack {
-        queryId: 6008,
+        queryId: 21,
     }.toCell();
 
     val confirmed = contract.sendAny(
@@ -6245,7 +6248,7 @@ get fun `test authenticated protocol fee excesses finalizes withdrawal`() {
 
     val duplicate = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6009),
+        makeBeginProtocolFeeWithdrawalMessage(22),
         { value: grams("0.1") }
     );
 
@@ -6308,7 +6311,7 @@ get fun `test forged protocol fee excesses cannot finalize withdrawal`() {
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6010),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -6318,7 +6321,7 @@ get fun `test forged protocol fee excesses cannot finalize withdrawal`() {
     });
 
     val responseBody = ResponseWalletAddress {
-        queryId: 6010,
+        queryId: 21,
         jettonWalletAddress:
             treasuryJettonWallet.address,
         ownerAddress: protocolTreasury.address.toCell(),
@@ -6337,7 +6340,7 @@ get fun `test forged protocol fee excesses cannot finalize withdrawal`() {
 
     val dispatched = contract.sendAny(
         protocolTreasury.address,
-        makeDispatchProtocolFeeWithdrawalMessage(6010),
+        makeDispatchProtocolFeeWithdrawalMessage(21),
         { value: grams("0.15") }
     );
 
@@ -6351,7 +6354,7 @@ get fun `test forged protocol fee excesses cannot finalize withdrawal`() {
     // --------------------------------------------------------
 
     val forgedBody = ReturnExcessesBack {
-        queryId: 6010,
+        queryId: 21,
     }.toCell();
 
     val forged = contract.sendAny(
@@ -6470,7 +6473,7 @@ get fun `test protocol fees remain locked until every member is settled`() {
     // La trésorerie ne peut donc pas toucher aux fees.
     val blocked = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6020),
+        makeBeginProtocolFeeWithdrawalMessage(11),
         { value: grams("0.1") }
     );
 
@@ -6510,7 +6513,7 @@ get fun `test protocol fees remain locked until every member is settled`() {
     // La condition de priorité des membres est désormais levée.
     val allowed = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6021),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -6570,7 +6573,7 @@ get fun `test authoritative master cannot resolve payout wallet for wrong owner`
 
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(910),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
 
@@ -6581,7 +6584,7 @@ get fun `test authoritative master cannot resolve payout wallet for wrong owner`
 
     val lookup = contract.sendAny(
         controller.address,
-        makeResolvePayoutWalletMessage(910),
+        makeResolvePayoutWalletMessage(1),
         { value: grams("0.1") }
     );
 
@@ -6594,7 +6597,7 @@ get fun `test authoritative master cannot resolve payout wallet for wrong owner`
     // mais prétend que le wallet appartient à Bob
     // alors que le bénéficiaire du round 1 est Alice.
     val wrongOwnerBody = ResponseWalletAddress {
-        queryId: 910,
+        queryId: 1,
         jettonWalletAddress:
             candidateWallet.address,
         ownerAddress:
@@ -6623,7 +6626,7 @@ get fun `test authoritative master cannot resolve payout wallet for wrong owner`
 
     // Le vrai owner peut toujours être accepté ensuite.
     val correctBody = ResponseWalletAddress {
-        queryId: 910,
+        queryId: 1,
         jettonWalletAddress:
             candidateWallet.address,
         ownerAddress:
@@ -6685,7 +6688,7 @@ get fun `test authoritative master cannot resolve settlement wallet for wrong ow
 
     val claim = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4011),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
 
@@ -6695,7 +6698,7 @@ get fun `test authoritative master cannot resolve settlement wallet for wrong ow
     });
 
     val wrongOwnerBody = ResponseWalletAddress {
-        queryId: 4011,
+        queryId: 11,
         jettonWalletAddress:
             candidateWallet.address,
         ownerAddress:
@@ -6723,7 +6726,7 @@ get fun `test authoritative master cannot resolve settlement wallet for wrong ow
     ).toBeFalse();
 
     val correctBody = ResponseWalletAddress {
-        queryId: 4011,
+        queryId: 11,
         jettonWalletAddress:
             candidateWallet.address,
         ownerAddress:
@@ -6798,7 +6801,7 @@ get fun `test authoritative master cannot resolve treasury wallet for wrong owne
 
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6011),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
 
@@ -6808,7 +6811,7 @@ get fun `test authoritative master cannot resolve treasury wallet for wrong owne
     });
 
     val wrongOwnerBody = ResponseWalletAddress {
-        queryId: 6011,
+        queryId: 21,
         jettonWalletAddress:
             candidateWallet.address,
         ownerAddress:
@@ -6840,7 +6843,7 @@ get fun `test authoritative master cannot resolve treasury wallet for wrong owne
     ).toEqual(50000000);
 
     val correctBody = ResponseWalletAddress {
-        queryId: 6011,
+        queryId: 21,
         jettonWalletAddress:
             candidateWallet.address,
         ownerAddress:
@@ -6909,7 +6912,7 @@ get fun `test prepare payout rejects non monotonic queryId`() {
     // Initial lastOperationQueryId is 0
     expect(contract.lastOperationQueryId()).toEqual(0);
 
-    // QueryId 0 is rejected because 0 is not > 0
+    // QueryId 0 is rejected (0 != 0 + 1)
     val zeroQuery = contract.sendAny(
         controller.address,
         makePreparePayoutMessage(0),
@@ -6920,31 +6923,71 @@ get fun `test prepare payout rejects non monotonic queryId`() {
         to: contract.address,
         exitCode: TontineErrors.ReplayedQueryId,
     });
+    expect(contract.lastOperationQueryId()).toEqual(0);
 
-    // Valid queryId 1000 succeeds
+    // Jump of queryId (2 != 0 + 1) is rejected
+    val jumpQuery = contract.sendAny(
+        controller.address,
+        makePreparePayoutMessage(2),
+        { value: grams("0.1") }
+    );
+    expect(jumpQuery).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.ReplayedQueryId,
+    });
+    expect(contract.lastOperationQueryId()).toEqual(0);
+
+    // uint64::max is rejected when not expected
+    val maxQuery = contract.sendAny(
+        controller.address,
+        makePreparePayoutMessage(18446744073709551615),
+        { value: grams("0.1") }
+    );
+    expect(maxQuery).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.ReplayedQueryId,
+    });
+    expect(contract.lastOperationQueryId()).toEqual(0);
+
+    // Strictly sequential queryId 1 succeeds
     val prepared = contract.sendAny(
         controller.address,
-        makePreparePayoutMessage(1000),
+        makePreparePayoutMessage(1),
         { value: grams("0.1") }
     );
     expect(prepared).toHaveSuccessfulTx({
         from: controller.address,
         to: contract.address,
     });
-    expect(contract.lastOperationQueryId()).toEqual(1000);
+    expect(contract.lastOperationQueryId()).toEqual(1);
+
+    // Replay of queryId 1 is rejected
+    val replayQuery = contract.sendAny(
+        controller.address,
+        makePreparePayoutMessage(1),
+        { value: grams("0.1") }
+    );
+    expect(replayQuery).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.ReplayedQueryId,
+    });
+    expect(contract.lastOperationQueryId()).toEqual(1);
 }
 
 get fun `test settlement rejects non monotonic queryId and replay across operations`() {
     val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
     advanceToCompletedCircle(contract, controller, alice, bob, usdtWallet);
 
-    // Payouts reached queryId 3010
-    expect(contract.lastOperationQueryId()).toEqual(3010);
+    // Payouts reached queryId 10
+    expect(contract.lastOperationQueryId()).toEqual(10);
 
-    // Alice attempts to use an old queryId (e.g. 3005 from round 5 payout)
+    // Alice attempts to use an old queryId (e.g. 5 from round 5 payout)
     val replayOldPayoutQuery = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(3005),
+        makeBeginSettlementMessage(5),
         { value: grams("0.1") }
     );
     expect(replayOldPayoutQuery).toHaveFailedTx({
@@ -6952,11 +6995,12 @@ get fun `test settlement rejects non monotonic queryId and replay across operati
         to: contract.address,
         exitCode: TontineErrors.ReplayedQueryId,
     });
+    expect(contract.lastOperationQueryId()).toEqual(10);
 
-    // Alice attempts to use queryId 3010 (same as last operation)
+    // Alice attempts to use queryId 10 (same as last operation)
     val replaySameQuery = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(3010),
+        makeBeginSettlementMessage(10),
         { value: grams("0.1") }
     );
     expect(replaySameQuery).toHaveFailedTx({
@@ -6964,21 +7008,35 @@ get fun `test settlement rejects non monotonic queryId and replay across operati
         to: contract.address,
         exitCode: TontineErrors.ReplayedQueryId,
     });
+    expect(contract.lastOperationQueryId()).toEqual(10);
 
-    // Alice uses strictly monotonic queryId 4001 -> succeeds
+    // Alice attempts to jump to queryId 12 (12 != 10 + 1)
+    val jumpQuery = contract.sendAny(
+        alice.address,
+        makeBeginSettlementMessage(12),
+        { value: grams("0.1") }
+    );
+    expect(jumpQuery).toHaveFailedTx({
+        from: alice.address,
+        to: contract.address,
+        exitCode: TontineErrors.ReplayedQueryId,
+    });
+    expect(contract.lastOperationQueryId()).toEqual(10);
+
+    // Alice uses strictly sequential queryId 11 -> succeeds
     completeMemberSettlement(
         contract,
         alice,
         testing.treasury("settle-wallet-alice-audit"),
-        4001,
+        11,
         180000000,
     );
-    expect(contract.lastOperationQueryId()).toEqual(4001);
+    expect(contract.lastOperationQueryId()).toEqual(11);
 
-    // Bob attempts to replay Alice's settlement queryId 4001 -> rejected!
+    // Bob attempts to replay Alice's settlement queryId 11 -> rejected!
     val replayAliceQuery = contract.sendAny(
         bob.address,
-        makeBeginSettlementMessage(4001),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
     expect(replayAliceQuery).toHaveFailedTx({
@@ -6986,11 +7044,12 @@ get fun `test settlement rejects non monotonic queryId and replay across operati
         to: contract.address,
         exitCode: TontineErrors.ReplayedQueryId,
     });
+    expect(contract.lastOperationQueryId()).toEqual(11);
 
-    // Bob attempts to use lower queryId 3500 -> rejected!
+    // Bob attempts to use lower queryId 8 -> rejected!
     val lowerQuery = contract.sendAny(
         bob.address,
-        makeBeginSettlementMessage(3500),
+        makeBeginSettlementMessage(8),
         { value: grams("0.1") }
     );
     expect(lowerQuery).toHaveFailedTx({
@@ -6998,16 +7057,30 @@ get fun `test settlement rejects non monotonic queryId and replay across operati
         to: contract.address,
         exitCode: TontineErrors.ReplayedQueryId,
     });
+    expect(contract.lastOperationQueryId()).toEqual(11);
 
-    // Bob uses strictly monotonic queryId 4002 -> succeeds
+    // Bob attempts to jump to queryId 14 -> rejected!
+    val jumpBobQuery = contract.sendAny(
+        bob.address,
+        makeBeginSettlementMessage(14),
+        { value: grams("0.1") }
+    );
+    expect(jumpBobQuery).toHaveFailedTx({
+        from: bob.address,
+        to: contract.address,
+        exitCode: TontineErrors.ReplayedQueryId,
+    });
+    expect(contract.lastOperationQueryId()).toEqual(11);
+
+    // Bob uses strictly sequential queryId 12 -> succeeds
     completeMemberSettlement(
         contract,
         bob,
         testing.treasury("settle-wallet-bob-audit"),
-        4002,
+        12,
         160000000,
     );
-    expect(contract.lastOperationQueryId()).toEqual(4002);
+    expect(contract.lastOperationQueryId()).toEqual(12);
 }
 
 get fun `test protocol fee withdrawal rejects non monotonic queryId`() {
@@ -7016,12 +7089,12 @@ get fun `test protocol fee withdrawal rejects non monotonic queryId`() {
     completeAllMemberSettlements(contract, alice, bob);
 
     val protocolTreasury = testing.treasury("protocol-treasury");
-    expect(contract.lastOperationQueryId()).toEqual(5010);
+    expect(contract.lastOperationQueryId()).toEqual(20);
 
-    // Treasury attempts to replay queryId 5005 from member settlement
+    // Treasury attempts to replay queryId 15 from member settlement
     val replaySettlementQuery = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(5005),
+        makeBeginProtocolFeeWithdrawalMessage(15),
         { value: grams("0.1") }
     );
     expect(replaySettlementQuery).toHaveFailedTx({
@@ -7029,11 +7102,12 @@ get fun `test protocol fee withdrawal rejects non monotonic queryId`() {
         to: contract.address,
         exitCode: TontineErrors.ReplayedQueryId,
     });
+    expect(contract.lastOperationQueryId()).toEqual(20);
 
-    // Treasury attempts to replay queryId 3010 from payout
+    // Treasury attempts to replay queryId 10 from payout
     val replayPayoutQuery = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(3010),
+        makeBeginProtocolFeeWithdrawalMessage(10),
         { value: grams("0.1") }
     );
     expect(replayPayoutQuery).toHaveFailedTx({
@@ -7041,18 +7115,32 @@ get fun `test protocol fee withdrawal rejects non monotonic queryId`() {
         to: contract.address,
         exitCode: TontineErrors.ReplayedQueryId,
     });
+    expect(contract.lastOperationQueryId()).toEqual(20);
 
-    // Treasury uses monotonic queryId 6001 -> succeeds
+    // Treasury attempts to jump to queryId 25 (25 != 20 + 1)
+    val jumpQuery = contract.sendAny(
+        protocolTreasury.address,
+        makeBeginProtocolFeeWithdrawalMessage(25),
+        { value: grams("0.1") }
+    );
+    expect(jumpQuery).toHaveFailedTx({
+        from: protocolTreasury.address,
+        to: contract.address,
+        exitCode: TontineErrors.ReplayedQueryId,
+    });
+    expect(contract.lastOperationQueryId()).toEqual(20);
+
+    // Treasury uses strictly sequential queryId 21 -> succeeds
     val begin = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6001),
+        makeBeginProtocolFeeWithdrawalMessage(21),
         { value: grams("0.1") }
     );
     expect(begin).toHaveSuccessfulTx({
         from: protocolTreasury.address,
         to: contract.address,
     });
-    expect(contract.lastOperationQueryId()).toEqual(6001);
+    expect(contract.lastOperationQueryId()).toEqual(21);
 }
 
 get fun `test delayed excess cannot finalize subsequent round payout`() {
@@ -7062,33 +7150,33 @@ get fun `test delayed excess cannot finalize subsequent round payout`() {
     val aliceWallet = testing.treasury("alice-payout-wallet");
     val bobWallet = testing.treasury("bob-payout-wallet");
 
-    // Round 1 completed with queryId 1001
+    // Round 1 completed with queryId 1
     fundFullRoundOne(contract, usdtWallet, alice, bob);
-    completeCurrentRoundPayout(contract, controller, aliceWallet, 1001);
+    completeCurrentRoundPayout(contract, controller, aliceWallet, 1);
 
     // Round 2 setup
     fundFullRoundOne(contract, usdtWallet, alice, bob);
-    contract.sendAny(controller.address, makePreparePayoutMessage(1002), { value: grams("0.1") });
-    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1002), { value: grams("0.1") });
+    contract.sendAny(controller.address, makePreparePayoutMessage(2), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(2), { value: grams("0.1") });
 
     val master = testing.treasury("usdt-master");
     contract.sendAny(
         master.address,
         ResponseWalletAddress {
-            queryId: 1002,
+            queryId: 2,
             jettonWalletAddress: bobWallet.address,
             ownerAddress: bob.address.toCell(),
         }.toCell(),
         { value: grams("0.05") }
     );
 
-    contract.sendAny(controller.address, makeDispatchPayoutMessage(1002), { value: grams("0.15") });
+    contract.sendAny(controller.address, makeDispatchPayoutMessage(2), { value: grams("0.15") });
     expect(contract.payoutDispatched()).toBeTrue();
 
-    // Adversarial / delayed excess from Round 1 (queryId 1001) sent to Round 2
+    // Adversarial / delayed excess from Round 1 (queryId 1) sent to Round 2
     val delayedExcessAlice = contract.sendAny(
         aliceWallet.address,
-        ReturnExcessesBack { queryId: 1001 }.toCell(),
+        ReturnExcessesBack { queryId: 1 }.toCell(),
         { value: grams("0.01") }
     );
     // Rejected because sender is not Round 2's resolved beneficiary wallet (bobWallet)
@@ -7098,13 +7186,13 @@ get fun `test delayed excess cannot finalize subsequent round payout`() {
         exitCode: TontineErrors.UnauthorizedJettonWallet,
     });
 
-    // Even if sent from bobWallet with queryId 1001:
+    // Even if sent from bobWallet with queryId 1:
     val delayedExcessBob = contract.sendAny(
         bobWallet.address,
-        ReturnExcessesBack { queryId: 1001 }.toCell(),
+        ReturnExcessesBack { queryId: 1 }.toCell(),
         { value: grams("0.01") }
     );
-    // Rejected because queryId doesn't match active pending payout queryId (1002)
+    // Rejected because queryId doesn't match active pending payout queryId (2)
     expect(delayedExcessBob).toHaveFailedTx({
         from: bobWallet.address,
         to: contract.address,
@@ -7122,20 +7210,20 @@ get fun `test delayed wallet response cannot resolve subsequent round lookup`() 
 
     val aliceWallet = testing.treasury("alice-wallet-1001");
     fundFullRoundOne(contract, usdtWallet, alice, bob);
-    completeCurrentRoundPayout(contract, controller, aliceWallet, 1001);
+    completeCurrentRoundPayout(contract, controller, aliceWallet, 1);
 
     // Round 2
     fundFullRoundOne(contract, usdtWallet, alice, bob);
-    contract.sendAny(controller.address, makePreparePayoutMessage(1002), { value: grams("0.1") });
-    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1002), { value: grams("0.1") });
+    contract.sendAny(controller.address, makePreparePayoutMessage(2), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(2), { value: grams("0.1") });
 
     val master = testing.treasury("usdt-master");
 
-    // Delayed response with queryId 1001
+    // Delayed response with queryId 1
     val delayedResponse = contract.sendAny(
         master.address,
         ResponseWalletAddress {
-            queryId: 1001,
+            queryId: 1,
             jettonWalletAddress: aliceWallet.address,
             ownerAddress: bob.address.toCell(),
         }.toCell(),
@@ -7160,31 +7248,31 @@ get fun `test delayed bounce from previous round does not reset dispatched on ac
 
     // Round 1 completed
     fundFullRoundOne(contract, usdtWallet, alice, bob);
-    completeCurrentRoundPayout(contract, controller, aliceWallet, 1001);
+    completeCurrentRoundPayout(contract, controller, aliceWallet, 1);
 
     // Round 2 dispatched
     fundFullRoundOne(contract, usdtWallet, alice, bob);
-    contract.sendAny(controller.address, makePreparePayoutMessage(1002), { value: grams("0.1") });
-    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1002), { value: grams("0.1") });
+    contract.sendAny(controller.address, makePreparePayoutMessage(2), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(2), { value: grams("0.1") });
     val master = testing.treasury("usdt-master");
     contract.sendAny(
         master.address,
         ResponseWalletAddress {
-            queryId: 1002,
+            queryId: 2,
             jettonWalletAddress: bobWallet.address,
             ownerAddress: bob.address.toCell(),
         }.toCell(),
         { value: grams("0.05") }
     );
-    contract.sendAny(controller.address, makeDispatchPayoutMessage(1002), { value: grams("0.15") });
+    contract.sendAny(controller.address, makeDispatchPayoutMessage(2), { value: grams("0.15") });
     expect(contract.payoutDispatched()).toBeTrue();
 
-    // Delayed bounce from round 1 with queryId 1001 arrives
+    // Delayed bounce from round 1 with queryId 1 arrives
     val oldBouncedMsg = createMessage({
         bounce: false,
         value: grams("0.05"),
         dest: contract.address,
-        body: makeTruncatedBouncedAskToTransfer(1001, 55000000),
+        body: makeTruncatedBouncedAskToTransfer(1, 55000000),
     }).bounced();
 
     testing.processSingleTraceStep(usdtWallet.address, oldBouncedMsg);
@@ -7193,27 +7281,27 @@ get fun `test delayed bounce from previous round does not reset dispatched on ac
     expect(contract.payoutDispatched()).toBeTrue();
 }
 
-get fun `test real 256 bit truncated bounce resets payout dispatch safely`() {
+get fun `test simulated 256 bit truncated bounce resets payout dispatch safely`() {
     val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
     prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
     fundFullRoundOne(contract, usdtWallet, alice, bob);
 
-    contract.sendAny(controller.address, makePreparePayoutMessage(1001), { value: grams("0.1") });
-    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1001), { value: grams("0.1") });
+    contract.sendAny(controller.address, makePreparePayoutMessage(1), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1), { value: grams("0.1") });
 
     val master = testing.treasury("usdt-master");
     val aliceWallet = testing.treasury("alice-w-trunc");
     contract.sendAny(
         master.address,
         ResponseWalletAddress {
-            queryId: 1001,
+            queryId: 1,
             jettonWalletAddress: aliceWallet.address,
             ownerAddress: alice.address.toCell(),
         }.toCell(),
         { value: grams("0.05") }
     );
 
-    contract.sendAny(controller.address, makeDispatchPayoutMessage(1001), { value: grams("0.15") });
+    contract.sendAny(controller.address, makeDispatchPayoutMessage(1), { value: grams("0.15") });
     expect(contract.payoutDispatched()).toBeTrue();
     expect(contract.payoutDispatchedAt()).toBeGreater(0);
 
@@ -7222,7 +7310,7 @@ get fun `test real 256 bit truncated bounce resets payout dispatch safely`() {
         bounce: false,
         value: grams("0.05"),
         dest: contract.address,
-        body: makeTruncatedBouncedAskToTransfer(1001, 55000000),
+        body: makeTruncatedBouncedAskToTransfer(1, 55000000),
     }).bounced();
 
     testing.processSingleTraceStep(usdtWallet.address, truncatedBounce);
@@ -7233,25 +7321,25 @@ get fun `test real 256 bit truncated bounce resets payout dispatch safely`() {
     expect(contract.payoutPending()).toBeTrue();
 }
 
-get fun `test real 256 bit truncated bounce resets settlement dispatch safely`() {
+get fun `test simulated 256 bit truncated bounce resets settlement dispatch safely`() {
     val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
     advanceToCompletedCircle(contract, controller, alice, bob, usdtWallet);
 
     val master = testing.treasury("usdt-master");
     val aliceSettleWallet = testing.treasury("alice-settle-trunc");
 
-    contract.sendAny(alice.address, makeBeginSettlementMessage(4001), { value: grams("0.1") });
+    contract.sendAny(alice.address, makeBeginSettlementMessage(11), { value: grams("0.1") });
     contract.sendAny(
         master.address,
         ResponseWalletAddress {
-            queryId: 4001,
+            queryId: 11,
             jettonWalletAddress: aliceSettleWallet.address,
             ownerAddress: alice.address.toCell(),
         }.toCell(),
         { value: grams("0.05") }
     );
 
-    contract.sendAny(alice.address, makeDispatchSettlementMessage(4001), { value: grams("0.15") });
+    contract.sendAny(alice.address, makeDispatchSettlementMessage(11), { value: grams("0.15") });
     expect(contract.settlementDispatched()).toBeTrue();
     expect(contract.settlementDispatchedAt()).toBeGreater(0);
 
@@ -7260,7 +7348,7 @@ get fun `test real 256 bit truncated bounce resets settlement dispatch safely`()
         bounce: false,
         value: grams("0.05"),
         dest: contract.address,
-        body: makeTruncatedBouncedAskToTransfer(4001, 180000000),
+        body: makeTruncatedBouncedAskToTransfer(11, 180000000),
     }).bounced();
 
     testing.processSingleTraceStep(usdtWallet.address, truncatedBounce);
@@ -7271,13 +7359,13 @@ get fun `test real 256 bit truncated bounce resets settlement dispatch safely`()
     expect(contract.settlementPending()).toBeTrue();
 }
 
-get fun `test real 256 bit truncated bounce resets wallet lookup safely`() {
+get fun `test simulated 256 bit truncated bounce resets wallet lookup safely`() {
     val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
     prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
     fundFullRoundOne(contract, usdtWallet, alice, bob);
 
-    contract.sendAny(controller.address, makePreparePayoutMessage(1001), { value: grams("0.1") });
-    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1001), { value: grams("0.1") });
+    contract.sendAny(controller.address, makePreparePayoutMessage(1), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1), { value: grams("0.1") });
     expect(contract.payoutBeneficiaryWalletLookupPending()).toBeTrue();
 
     val master = testing.treasury("usdt-master");
@@ -7287,7 +7375,7 @@ get fun `test real 256 bit truncated bounce resets wallet lookup safely`() {
         bounce: false,
         value: grams("0.05"),
         dest: contract.address,
-        body: makeTruncatedBouncedRequestWalletAddress(1001),
+        body: makeTruncatedBouncedRequestWalletAddress(1),
     }).bounced();
 
     testing.processSingleTraceStep(master.address, truncatedLookupBounce);
@@ -7417,7 +7505,7 @@ get fun `test non member cannot begin settlement`() {
 
     val res = contract.sendAny(
         outsider.address,
-        makeBeginSettlementMessage(4001),
+        makeBeginSettlementMessage(11),
         { value: grams("0.1") }
     );
     expect(res).toHaveFailedTx({
@@ -7435,7 +7523,7 @@ get fun `test member cannot begin settlement before completed state`() {
 
     val res = contract.sendAny(
         alice.address,
-        makeBeginSettlementMessage(4001),
+        makeBeginSettlementMessage(1),
         { value: grams("0.1") }
     );
     expect(res).toHaveFailedTx({
@@ -7455,25 +7543,25 @@ get fun `test double protocol fee withdrawal is impossible`() {
     val master = testing.treasury("usdt-master");
 
     // First withdrawal
-    contract.sendAny(protocolTreasury.address, makeBeginProtocolFeeWithdrawalMessage(6001), { value: grams("0.1") });
+    contract.sendAny(protocolTreasury.address, makeBeginProtocolFeeWithdrawalMessage(21), { value: grams("0.1") });
     contract.sendAny(
         master.address,
         ResponseWalletAddress {
-            queryId: 6001,
+            queryId: 21,
             jettonWalletAddress: treasuryWallet.address,
             ownerAddress: protocolTreasury.address.toCell(),
         }.toCell(),
         { value: grams("0.05") }
     );
-    contract.sendAny(protocolTreasury.address, makeDispatchProtocolFeeWithdrawalMessage(6001), { value: grams("0.15") });
-    contract.sendAny(treasuryWallet.address, ReturnExcessesBack { queryId: 6001 }.toCell(), { value: grams("0.01") });
+    contract.sendAny(protocolTreasury.address, makeDispatchProtocolFeeWithdrawalMessage(21), { value: grams("0.15") });
+    contract.sendAny(treasuryWallet.address, ReturnExcessesBack { queryId: 21 }.toCell(), { value: grams("0.01") });
 
     expect(contract.protocolFeesAccrued()).toEqual(0);
 
     // Second withdrawal attempt
     val secondAttempt = contract.sendAny(
         protocolTreasury.address,
-        makeBeginProtocolFeeWithdrawalMessage(6002),
+        makeBeginProtocolFeeWithdrawalMessage(22),
         { value: grams("0.1") }
     );
     expect(secondAttempt).toHaveFailedTx({
@@ -7481,5 +7569,1480 @@ get fun `test double protocol fee withdrawal is impossible`() {
         to: contract.address,
         exitCode: TontineErrors.ProtocolFeeNothingToWithdraw,
     });
+}
+
+// ==================================================================
+// CHANTIER 1: STRICT SEQUENTIAL ANTI-REPLAY & OVERFLOW TESTS
+// ==================================================================
+
+fun setupCircleWithLastQueryId(lastQueryId: uint64): (
+    TontineCircle,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury
+) {
+    val controller = testing.treasury("controller-ovf");
+    val alice = testing.treasury("alice-ovf");
+    val bob = testing.treasury("bob-ovf");
+    val outsider = testing.treasury("outsider-ovf");
+    val usdtWallet = testing.treasury("usdt-wallet-ovf");
+    val fakeJettonWallet = testing.treasury("fake-wallet-ovf");
+
+    val contract = TontineCircle.fromStorage({
+        circleId: 1,
+        controller: controller.address,
+        usdtWallet: usdtWallet.address,
+
+        protocolState: (ProtocolState {
+            jettonMasterConfig: JettonMasterConfig {
+                usdtMaster: testing.treasury("usdt-master-ovf").address,
+                protocolTreasury: testing.treasury("protocol-treasury-ovf").address,
+                circleWalletLookupPending: false,
+                circleWalletResolved: true,
+                circleWalletQueryId: 0,
+            }.toCell(),
+
+            settlement: (SettlementState {
+                settlementPending: false,
+                walletLookupPending: false,
+                settlementDispatched: false,
+                settlementDispatchedAt: 0,
+                memberAddress: null,
+                memberJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            feeState: (ProtocolFeeState {
+                withdrawalPending: false,
+                walletLookupPending: false,
+                withdrawalDispatched: false,
+                withdrawalDispatchedAt: 0,
+                treasuryJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            memberSettlementsCompleted: 0,
+            lastOperationQueryId: lastQueryId,
+        }).toCell(),
+
+        state: 1,
+        currentRound: 0,
+
+        memberCount: 10,
+        registeredCount: 0,
+        fundedBondCount: 0,
+        roundContributionCount: 0,
+        roundCollected: 0,
+
+        payout: (PayoutState {
+            payoutPending: false,
+            payoutDispatched: false,
+            payoutDispatchedAt: 0,
+            beneficiaryWalletLookupPending: false,
+            beneficiaryJettonWallet: null,
+            pendingPayoutRound: 0,
+            pendingPayoutAmount: 0,
+            pendingPayoutEscrow: 0,
+            pendingPayoutFee: 0,
+            pendingPayoutQueryId: 0,
+            protocolFeesAccrued: 0,
+        }).toCell(),
+
+        contributionAmount: 20000000,
+        personalBond: 40000000,
+        protocolFeeBps: 250,
+
+        members: [],
+        roundOwners: [],
+    });
+
+    val deployResult = contract.deploy(
+        controller.address,
+        { value: grams("1") }
+    );
+
+    expect(deployResult).toHaveSuccessfulDeploy({
+        to: contract.address
+    });
+
+    return (
+        contract,
+        controller,
+        alice,
+        bob,
+        outsider,
+        usdtWallet,
+        fakeJettonWallet
+    );
+}
+
+get fun `test prepare payout rejects queryId overflow at uint64 max`() {
+    val (contract, controller, alice, bob, _, usdtWallet, _) =
+        setupCircleWithLastQueryId(18446744073709551615);
+    prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
+    fundFullRoundOne(contract, usdtWallet, alice, bob);
+
+    val res = contract.sendAny(
+        controller.address,
+        makePreparePayoutMessage(1),
+        { value: grams("0.1") }
+    );
+    expect(res).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.QueryIdOverflow,
+    });
+}
+
+get fun `test initial operation queryId is zero on clean deployment`() {
+    val (contract, _, _, _, _, _, _) = setupTest();
+    expect(contract.lastOperationQueryId()).toEqual(0);
+}
+
+get fun `test normal state transition max minus one to max queryId accepted then next overflows`() {
+    val (contract, controller, alice, bob, _, usdtWallet, _) =
+        setupCircleWithLastQueryId(18446744073709551614);
+    prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
+    fundFullRoundOne(contract, usdtWallet, alice, bob);
+
+    val resSuccess = contract.sendAny(
+        controller.address,
+        makePreparePayoutMessage(18446744073709551615),
+        { value: grams("0.1") }
+    );
+    expect(resSuccess).toHaveSuccessfulTx({
+        from: controller.address,
+        to: contract.address,
+    });
+    expect(contract.lastOperationQueryId()).toEqual(18446744073709551615);
+
+    val resOverflow = contract.sendAny(
+        controller.address,
+        makePreparePayoutMessage(1),
+        { value: grams("0.1") }
+    );
+    expect(resOverflow).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.QueryIdOverflow,
+    });
+}
+
+fun setupCompletedCircleWithLastQueryId(lastQueryId: uint64): (
+    TontineCircle,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury
+) {
+    val controller = testing.treasury("controller-ovf2");
+    val alice = testing.treasury("alice-ovf2");
+    val usdtWallet = testing.treasury("usdt-wallet-ovf2");
+    val usdtMaster = testing.treasury("usdt-master-ovf2");
+    val protocolTreasury = testing.treasury("protocol-treasury-ovf2");
+
+    var members: map<address, MemberPosition> = [];
+    members.set(alice.address, MemberPosition {
+        memberId: 1,
+        assignedRound: 1,
+        status: 4,
+        totalContributed: 200000000,
+        remainingDebt: 0,
+        bondLocked: 40000000,
+        escrowLocked: 140000000,
+        p2pGuaranteeActive: 0,
+        protocolGuaranteeActive: 0,
+        beneficiaryPaid: true,
+        defaultDeclared: false,
+        lastContributionRound: 10,
+    });
+
+    var roundOwners: map<uint8, address> = [];
+    roundOwners.set(1, alice.address);
+
+    val contract = TontineCircle.fromStorage({
+        circleId: 1,
+        controller: controller.address,
+        usdtWallet: usdtWallet.address,
+
+        protocolState: (ProtocolState {
+            jettonMasterConfig: JettonMasterConfig {
+                usdtMaster: usdtMaster.address,
+                protocolTreasury: protocolTreasury.address,
+                circleWalletLookupPending: false,
+                circleWalletResolved: true,
+                circleWalletQueryId: 0,
+            }.toCell(),
+
+            settlement: (SettlementState {
+                settlementPending: false,
+                walletLookupPending: false,
+                settlementDispatched: false,
+                settlementDispatchedAt: 0,
+                memberAddress: null,
+                memberJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            feeState: (ProtocolFeeState {
+                withdrawalPending: false,
+                walletLookupPending: false,
+                withdrawalDispatched: false,
+                withdrawalDispatchedAt: 0,
+                treasuryJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            memberSettlementsCompleted: 10,
+            lastOperationQueryId: lastQueryId,
+        }).toCell(),
+
+        state: 5,
+        currentRound: 10,
+
+        memberCount: 10,
+        registeredCount: 10,
+        fundedBondCount: 10,
+        roundContributionCount: 10,
+        roundCollected: 200000000,
+
+        payout: (PayoutState {
+            payoutPending: false,
+            payoutDispatched: false,
+            payoutDispatchedAt: 0,
+            beneficiaryWalletLookupPending: false,
+            beneficiaryJettonWallet: null,
+            pendingPayoutRound: 0,
+            pendingPayoutAmount: 0,
+            pendingPayoutEscrow: 0,
+            pendingPayoutFee: 0,
+            pendingPayoutQueryId: 0,
+            protocolFeesAccrued: 50000000,
+        }).toCell(),
+
+        contributionAmount: 20000000,
+        personalBond: 40000000,
+        protocolFeeBps: 250,
+
+        members,
+        roundOwners,
+    });
+
+    val deployResult = contract.deploy(
+        controller.address,
+        { value: grams("1") }
+    );
+
+    expect(deployResult).toHaveSuccessfulDeploy({
+        to: contract.address
+    });
+
+    return (
+        contract,
+        controller,
+        alice,
+        usdtWallet,
+        protocolTreasury,
+        usdtMaster
+    );
+}
+
+get fun `test settlement rejects queryId overflow at uint64 max`() {
+    val (contract, _, alice, _, _, _) =
+        setupCompletedCircleWithLastQueryId(18446744073709551615);
+
+    val res = contract.sendAny(
+        alice.address,
+        makeBeginSettlementMessage(1),
+        { value: grams("0.1") }
+    );
+    expect(res).toHaveFailedTx({
+        from: alice.address,
+        to: contract.address,
+        exitCode: TontineErrors.QueryIdOverflow,
+    });
+}
+
+get fun `test protocol fee withdrawal rejects queryId overflow at uint64 max`() {
+    val (contract, _, _, _, protocolTreasury, _) =
+        setupCompletedCircleWithLastQueryId(18446744073709551615);
+
+    val res = contract.sendAny(
+        protocolTreasury.address,
+        makeBeginProtocolFeeWithdrawalMessage(1),
+        { value: grams("0.1") }
+    );
+    expect(res).toHaveFailedTx({
+        from: protocolTreasury.address,
+        to: contract.address,
+        exitCode: TontineErrors.QueryIdOverflow,
+    });
+}
+
+get fun `test non controller prepare payout failure does not advance queryId`() {
+    val (contract, controller, alice, bob, outsider, usdtWallet, _) = setupTest();
+    prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
+    fundFullRoundOne(contract, usdtWallet, alice, bob);
+
+    expect(contract.lastOperationQueryId()).toEqual(0);
+
+    val res = contract.sendAny(
+        outsider.address,
+        makePreparePayoutMessage(1),
+        { value: grams("0.1") }
+    );
+    expect(res).toHaveFailedTx({
+        from: outsider.address,
+        to: contract.address,
+        exitCode: TontineErrors.NotController,
+    });
+
+    expect(contract.lastOperationQueryId()).toEqual(0);
+}
+
+// ==================================================================
+// CHANTIER 2: CIRCLE JETTON WALLET RESOLUTION & TRUST ELIMINATION
+// ==================================================================
+
+fun makeBeginCircleJettonWalletResolutionMessage(queryId: uint64): cell {
+    return beginCell()
+        .storeUint(0x52434A57, 32)
+        .storeUint(queryId, 64)
+        .endCell();
+}
+
+fun setupUnresolvedCircle(): (
+    TontineCircle,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury
+) {
+    val controller = testing.treasury("controller-unresolved");
+    val alice = testing.treasury("alice-unresolved");
+    val bob = testing.treasury("bob-unresolved");
+    val outsider = testing.treasury("outsider-unresolved");
+    val canonicalCircleWallet = testing.treasury("canonical-circle-wallet");
+    val fakeJettonWallet = testing.treasury("fake-wallet-unresolved");
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    val contract = TontineCircle.fromStorage({
+        circleId: 1,
+        controller: controller.address,
+        usdtWallet: null,
+
+        protocolState: (ProtocolState {
+            jettonMasterConfig: JettonMasterConfig {
+                usdtMaster: usdtMaster.address,
+                protocolTreasury: testing.treasury("protocol-treasury-unresolved").address,
+                circleWalletLookupPending: false,
+                circleWalletResolved: false,
+                circleWalletQueryId: 0,
+            }.toCell(),
+
+            settlement: (SettlementState {
+                settlementPending: false,
+                walletLookupPending: false,
+                settlementDispatched: false,
+                settlementDispatchedAt: 0,
+                memberAddress: null,
+                memberJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            feeState: (ProtocolFeeState {
+                withdrawalPending: false,
+                walletLookupPending: false,
+                withdrawalDispatched: false,
+                withdrawalDispatchedAt: 0,
+                treasuryJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            memberSettlementsCompleted: 0,
+            lastOperationQueryId: 0,
+        }).toCell(),
+
+        state: 1,
+        currentRound: 0,
+
+        memberCount: 10,
+        registeredCount: 0,
+        fundedBondCount: 0,
+        roundContributionCount: 0,
+        roundCollected: 0,
+
+        payout: (PayoutState {
+            payoutPending: false,
+            payoutDispatched: false,
+            payoutDispatchedAt: 0,
+            beneficiaryWalletLookupPending: false,
+            beneficiaryJettonWallet: null,
+            pendingPayoutRound: 0,
+            pendingPayoutAmount: 0,
+            pendingPayoutEscrow: 0,
+            pendingPayoutFee: 0,
+            pendingPayoutQueryId: 0,
+            protocolFeesAccrued: 0,
+        }).toCell(),
+
+        contributionAmount: 20000000,
+        personalBond: 40000000,
+        protocolFeeBps: 250,
+
+        members: [],
+        roundOwners: [],
+    });
+
+    val deployResult = contract.deploy(
+        controller.address,
+        { value: grams("1") }
+    );
+
+    expect(deployResult).toHaveSuccessfulDeploy({
+        to: contract.address
+    });
+
+    return (
+        contract,
+        controller,
+        alice,
+        bob,
+        outsider,
+        canonicalCircleWallet,
+        fakeJettonWallet
+    );
+}
+
+get fun `test controller can initiate circle jetton wallet resolution and resolve successfully`() {
+    val (contract, controller, _, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    expect(contract.circleJettonWalletResolved()).toBeFalse();
+    expect(contract.circleJettonWalletLookupPending()).toBeFalse();
+
+    // Controller initiates resolution with queryId 10
+    val initRes = contract.sendAny(
+        controller.address,
+        makeBeginCircleJettonWalletResolutionMessage(10),
+        { value: grams("0.1") }
+    );
+    expect(initRes).toHaveSuccessfulTx({
+        from: controller.address,
+        to: contract.address,
+    });
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+    expect(contract.circleJettonWalletResolved()).toBeFalse();
+
+    // USDT Master returns authenticated response for circle.address
+    val respRes = contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 10,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(respRes).toHaveSuccessfulTx({
+        from: usdtMaster.address,
+        to: contract.address,
+    });
+
+    expect(contract.circleJettonWalletResolved()).toBeTrue();
+    expect(contract.circleJettonWalletLookupPending()).toBeFalse();
+    expect(contract.circleJettonWallet()).toEqual(canonicalCircleWallet.address);
+}
+
+get fun `test non controller cannot initiate circle jetton wallet resolution`() {
+    val (contract, _, alice, _, _, _, _) = setupUnresolvedCircle();
+
+    val res = contract.sendAny(
+        alice.address,
+        makeBeginCircleJettonWalletResolutionMessage(10),
+        { value: grams("0.1") }
+    );
+    expect(res).toHaveFailedTx({
+        from: alice.address,
+        to: contract.address,
+        exitCode: TontineErrors.NotController,
+    });
+}
+
+get fun `test cannot initiate circle jetton wallet resolution twice`() {
+    val (contract, controller, _, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+    contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 10,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(contract.circleJettonWalletResolved()).toBeTrue();
+
+    val secondAttempt = contract.sendAny(
+        controller.address,
+        makeBeginCircleJettonWalletResolutionMessage(11),
+        { value: grams("0.1") }
+    );
+    expect(secondAttempt).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletAlreadyResolved,
+    });
+}
+
+get fun `test cannot initiate circle jetton wallet resolution while lookup is pending`() {
+    val (contract, controller, _, _, _, _, _) = setupUnresolvedCircle();
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+
+    val parallelAttempt = contract.sendAny(
+        controller.address,
+        makeBeginCircleJettonWalletResolutionMessage(11),
+        { value: grams("0.1") }
+    );
+    expect(parallelAttempt).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletLookupAlreadyPending,
+    });
+}
+
+get fun `test fake master cannot resolve circle jetton wallet`() {
+    val (contract, controller, _, _, outsider, canonicalCircleWallet, _) = setupUnresolvedCircle();
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+
+    val fakeResp = contract.sendAny(
+        outsider.address,
+        ResponseWalletAddress {
+            queryId: 10,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(fakeResp).toHaveFailedTx({
+        from: outsider.address,
+        to: contract.address,
+        exitCode: TontineErrors.UnauthorizedJettonWallet,
+    });
+}
+
+get fun `test authoritative master cannot resolve circle jetton wallet for wrong owner`() {
+    val (contract, controller, alice, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+
+    val wrongOwnerResp = contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 10,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: alice.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(wrongOwnerResp).toHaveFailedTx({
+        from: usdtMaster.address,
+        to: contract.address,
+        exitCode: TontineErrors.JettonWalletOwnerMismatch,
+    });
+}
+
+get fun `test authoritative master cannot resolve circle jetton wallet with queryId mismatch`() {
+    val (contract, controller, _, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+
+    val queryMismatch = contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 999,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(queryMismatch).toHaveFailedTx({
+        from: usdtMaster.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletQueryMismatch,
+    });
+}
+
+get fun `test authoritative master cannot resolve circle jetton wallet with null address`() {
+    val (contract, controller, _, _, _, _, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+
+    val nullWalletResp = contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 10,
+            jettonWalletAddress: null,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(nullWalletResp).toHaveFailedTx({
+        from: usdtMaster.address,
+        to: contract.address,
+        exitCode: TontineErrors.WalletNotResolved,
+    });
+}
+
+get fun `test bounced circle jetton wallet lookup resets pending state and allows retry`() {
+    val (contract, controller, _, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+
+    // Master bounces RequestWalletAddress
+    val bouncedLookup = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: makeTruncatedBouncedRequestWalletAddress(10),
+    }).bounced();
+
+    testing.processSingleTraceStep(usdtMaster.address, bouncedLookup);
+
+    expect(contract.circleJettonWalletLookupPending()).toBeFalse();
+    expect(contract.circleJettonWalletResolved()).toBeFalse();
+
+    // Retry resolution with queryId 11 succeeds
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(11), { value: grams("0.1") });
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+
+    contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 11,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+
+    expect(contract.circleJettonWalletResolved()).toBeTrue();
+    expect(contract.circleJettonWallet()).toEqual(canonicalCircleWallet.address);
+}
+
+get fun `test bond funding rejected before circle wallet resolution`() {
+    val (contract, controller, alice, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+
+    contract.sendAddMember(
+        controller.address,
+        1,
+        alice.address,
+        1,
+        { value: grams("0.1") }
+    );
+
+    val notif = contract.sendAny(
+        canonicalCircleWallet.address,
+        makeJettonNotification(1, 40000000, alice.address),
+        { value: grams("0.1") }
+    );
+    expect(notif).toHaveFailedTx({
+        from: canonicalCircleWallet.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletNotResolved,
+    });
+}
+
+fun setupUnresolvedCircleWithFundedBond(): (
+    TontineCircle,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury,
+    Treasury
+) {
+    val controller = testing.treasury("ctrl-bonded-unres");
+    val alice = testing.treasury("alice-bonded-unres");
+    val bob = testing.treasury("bob-bonded-unres");
+    val outsider = testing.treasury("outsider-bonded-unres");
+    val canonicalCircleWallet = testing.treasury("canon-wallet-bonded-unres");
+    val fakeJettonWallet = testing.treasury("fake-wallet-bonded-unres");
+
+    var members: map<address, MemberPosition> = [];
+    members.set(alice.address, MemberPosition {
+        memberId: 1,
+        assignedRound: 1,
+        status: 2,
+        totalContributed: 0,
+        remainingDebt: 200000000,
+        bondLocked: 40000000,
+        escrowLocked: 0,
+        p2pGuaranteeActive: 0,
+        protocolGuaranteeActive: 0,
+        beneficiaryPaid: false,
+        defaultDeclared: false,
+        lastContributionRound: 0,
+    });
+
+    var roundOwners: map<uint8, address> = [];
+    roundOwners.set(1, alice.address);
+
+    val contract = TontineCircle.fromStorage({
+        circleId: 99,
+        controller: controller.address,
+        usdtWallet: null,
+
+        protocolState: (ProtocolState {
+            jettonMasterConfig: JettonMasterConfig {
+                usdtMaster: testing.treasury("usdt-master-unresolved").address,
+                protocolTreasury: testing.treasury("protocol-treasury-unresolved").address,
+                circleWalletLookupPending: false,
+                circleWalletResolved: false,
+                circleWalletQueryId: 0,
+            }.toCell(),
+
+            settlement: (SettlementState {
+                settlementPending: false,
+                walletLookupPending: false,
+                settlementDispatched: false,
+                settlementDispatchedAt: 0,
+                memberAddress: null,
+                memberJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            feeState: (ProtocolFeeState {
+                withdrawalPending: false,
+                walletLookupPending: false,
+                withdrawalDispatched: false,
+                withdrawalDispatchedAt: 0,
+                treasuryJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            memberSettlementsCompleted: 0,
+            lastOperationQueryId: 0,
+        }).toCell(),
+
+        state: 1,
+        currentRound: 0,
+
+        memberCount: 10,
+        registeredCount: 1,
+        fundedBondCount: 1,
+        roundContributionCount: 0,
+        roundCollected: 0,
+
+        payout: (PayoutState {
+            payoutPending: false,
+            payoutDispatched: false,
+            payoutDispatchedAt: 0,
+            beneficiaryWalletLookupPending: false,
+            beneficiaryJettonWallet: null,
+            pendingPayoutRound: 0,
+            pendingPayoutAmount: 0,
+            pendingPayoutEscrow: 0,
+            pendingPayoutFee: 0,
+            pendingPayoutQueryId: 0,
+            protocolFeesAccrued: 0,
+        }).toCell(),
+
+        contributionAmount: 20000000,
+        personalBond: 40000000,
+        protocolFeeBps: 250,
+
+        members,
+        roundOwners,
+    });
+
+    val deployResult = contract.deploy(
+        controller.address,
+        { value: grams("1") }
+    );
+    expect(deployResult).toHaveSuccessfulDeploy({
+        to: contract.address
+    });
+
+    return (
+        contract,
+        controller,
+        alice,
+        bob,
+        outsider,
+        canonicalCircleWallet,
+        fakeJettonWallet
+    );
+}
+
+fun setupUnresolvedCircleForPayoutDispatch(): (
+    TontineCircle,
+    Treasury,
+    Treasury
+) {
+    val controller = testing.treasury("ctrl-payout-unres");
+    val alice = testing.treasury("alice-payout-unres");
+    val usdtMaster = testing.treasury("usdt-master-payout-unres");
+    val protocolTreasury = testing.treasury("prot-treas-payout-unres");
+
+    var roundOwners: map<uint8, address> = [];
+    roundOwners.set(1, alice.address);
+
+    val contract = TontineCircle.fromStorage({
+        circleId: 88,
+        controller: controller.address,
+        usdtWallet: null,
+
+        protocolState: (ProtocolState {
+            jettonMasterConfig: JettonMasterConfig {
+                usdtMaster: usdtMaster.address,
+                protocolTreasury: protocolTreasury.address,
+                circleWalletLookupPending: false,
+                circleWalletResolved: false,
+                circleWalletQueryId: 0,
+            }.toCell(),
+
+            settlement: (SettlementState {
+                settlementPending: false,
+                walletLookupPending: false,
+                settlementDispatched: false,
+                settlementDispatchedAt: 0,
+                memberAddress: null,
+                memberJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            feeState: (ProtocolFeeState {
+                withdrawalPending: false,
+                walletLookupPending: false,
+                withdrawalDispatched: false,
+                withdrawalDispatchedAt: 0,
+                treasuryJettonWallet: null,
+                amount: 0,
+                queryId: 0,
+            }).toCell(),
+
+            memberSettlementsCompleted: 0,
+            lastOperationQueryId: 1,
+        }).toCell(),
+
+        state: 4,
+        currentRound: 1,
+
+        memberCount: 10,
+        registeredCount: 10,
+        fundedBondCount: 10,
+        roundContributionCount: 10,
+        roundCollected: 200000000,
+
+        payout: (PayoutState {
+            payoutPending: true,
+            payoutDispatched: false,
+            payoutDispatchedAt: 0,
+            beneficiaryWalletLookupPending: false,
+            beneficiaryJettonWallet: testing.treasury("alice-jw-payout-unres").address,
+            pendingPayoutRound: 1,
+            pendingPayoutAmount: 55000000,
+            pendingPayoutEscrow: 140000000,
+            pendingPayoutFee: 5000000,
+            pendingPayoutQueryId: 1,
+            protocolFeesAccrued: 5000000,
+        }).toCell(),
+
+        contributionAmount: 20000000,
+        personalBond: 40000000,
+        protocolFeeBps: 250,
+
+        members: [],
+        roundOwners,
+    });
+
+    val deployResult = contract.deploy(
+        controller.address,
+        { value: grams("1") }
+    );
+    expect(deployResult).toHaveSuccessfulDeploy({
+        to: contract.address
+    });
+
+    return (
+        contract,
+        controller,
+        alice
+    );
+}
+
+fun setupUnresolvedCircleForSettlementDispatch(): (
+    TontineCircle,
+    Treasury,
+    Treasury,
+    Treasury
+) {
+    val controller = testing.treasury("ctrl-settle-unres");
+    val alice = testing.treasury("alice-settle-unres");
+    val usdtMaster = testing.treasury("usdt-master-settle-unres");
+    val protocolTreasury = testing.treasury("prot-treas-settle-unres");
+
+    var members: map<address, MemberPosition> = [];
+    members.set(alice.address, MemberPosition {
+        memberId: 1,
+        assignedRound: 1,
+        status: 4,
+        totalContributed: 200000000,
+        remainingDebt: 0,
+        bondLocked: 40000000,
+        escrowLocked: 140000000,
+        p2pGuaranteeActive: 0,
+        protocolGuaranteeActive: 0,
+        beneficiaryPaid: true,
+        defaultDeclared: false,
+        lastContributionRound: 10,
+    });
+
+    val contract = TontineCircle.fromStorage({
+        circleId: 89,
+        controller: controller.address,
+        usdtWallet: null,
+
+        protocolState: (ProtocolState {
+            jettonMasterConfig: JettonMasterConfig {
+                usdtMaster: usdtMaster.address,
+                protocolTreasury: protocolTreasury.address,
+                circleWalletLookupPending: false,
+                circleWalletResolved: false,
+                circleWalletQueryId: 0,
+            }.toCell(),
+
+            settlement: (SettlementState {
+                settlementPending: true,
+                walletLookupPending: false,
+                settlementDispatched: false,
+                settlementDispatchedAt: 0,
+                memberAddress: alice.address,
+                memberJettonWallet: testing.treasury("alice-jw-settle-unres").address,
+                amount: 180000000,
+                queryId: 11,
+            }).toCell(),
+
+            feeState: (ProtocolFeeState {
+                withdrawalPending: true,
+                walletLookupPending: false,
+                withdrawalDispatched: false,
+                withdrawalDispatchedAt: 0,
+                treasuryJettonWallet: testing.treasury("treas-jw-settle-unres").address,
+                amount: 50000000,
+                queryId: 21,
+            }).toCell(),
+
+            memberSettlementsCompleted: 0,
+            lastOperationQueryId: 21,
+        }).toCell(),
+
+        state: 5,
+        currentRound: 10,
+
+        memberCount: 10,
+        registeredCount: 10,
+        fundedBondCount: 10,
+        roundContributionCount: 10,
+        roundCollected: 200000000,
+
+        payout: (PayoutState {
+            payoutPending: false,
+            payoutDispatched: false,
+            payoutDispatchedAt: 0,
+            beneficiaryWalletLookupPending: false,
+            beneficiaryJettonWallet: null,
+            pendingPayoutRound: 0,
+            pendingPayoutAmount: 0,
+            pendingPayoutEscrow: 0,
+            pendingPayoutFee: 0,
+            pendingPayoutQueryId: 0,
+            protocolFeesAccrued: 50000000,
+        }).toCell(),
+
+        contributionAmount: 20000000,
+        personalBond: 40000000,
+        protocolFeeBps: 250,
+
+        members,
+        roundOwners: [],
+    });
+
+    val deployResult = contract.deploy(
+        controller.address,
+        { value: grams("1") }
+    );
+    expect(deployResult).toHaveSuccessfulDeploy({
+        to: contract.address
+    });
+
+    return (
+        contract,
+        controller,
+        alice,
+        protocolTreasury
+    );
+}
+
+get fun `test authoritative master cannot resolve circle jetton wallet with null owner address`() {
+    val (contract, controller, _, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+
+    val nullOwnerResp = contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 10,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: null,
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(nullOwnerResp).toHaveFailedTx({
+        from: usdtMaster.address,
+        to: contract.address,
+        exitCode: TontineErrors.JettonWalletOwnerMismatch,
+    });
+}
+
+get fun `test cannot initiate circle jetton wallet resolution in state other than open`() {
+    val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
+    prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
+
+    val res = contract.sendAny(
+        controller.address,
+        makeBeginCircleJettonWalletResolutionMessage(10),
+        { value: grams("0.1") }
+    );
+    expect(res).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.InvalidState,
+    });
+}
+
+get fun `test cannot initiate circle jetton wallet resolution if bond is already funded`() {
+    val (contract, controller, _, _, _, _, _) = setupUnresolvedCircleWithFundedBond();
+
+    val res = contract.sendAny(
+        controller.address,
+        makeBeginCircleJettonWalletResolutionMessage(10),
+        { value: grams("0.1") }
+    );
+    expect(res).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.BondAlreadyFunded,
+    });
+}
+
+get fun `test master response wallet address is rejected when no lookup is pending`() {
+    val (contract, _, _, _, _, usdtWallet, _) = setupTest();
+    val usdtMaster = testing.treasury("usdt-master");
+
+    val res = contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 99,
+            jettonWalletAddress: usdtWallet.address,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(res).toHaveFailedTx({
+        from: usdtMaster.address,
+        to: contract.address,
+        exitCode: TontineErrors.InvalidState,
+    });
+}
+
+get fun `test bounced circle jetton wallet lookup with wrong queryId does not reset pending state`() {
+    val (contract, controller, _, _, _, _, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+
+    val bouncedLookupWrongQuery = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: makeTruncatedBouncedRequestWalletAddress(999),
+    }).bounced();
+    testing.processSingleTraceStep(usdtMaster.address, bouncedLookupWrongQuery);
+
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+
+    val retryFail = contract.sendAny(
+        controller.address,
+        makeBeginCircleJettonWalletResolutionMessage(11),
+        { value: grams("0.1") }
+    );
+    expect(retryFail).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletLookupAlreadyPending,
+    });
+}
+
+get fun `test master response with stale queryId after bounce and retry fails with query mismatch`() {
+    val (contract, controller, _, _, _, canonicalCircleWallet, _) = setupUnresolvedCircle();
+    val usdtMaster = testing.treasury("usdt-master-unresolved");
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(10), { value: grams("0.1") });
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+
+    val bouncedLookup = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: makeTruncatedBouncedRequestWalletAddress(10),
+    }).bounced();
+    testing.processSingleTraceStep(usdtMaster.address, bouncedLookup);
+    expect(contract.circleJettonWalletLookupPending()).toBeFalse();
+
+    contract.sendAny(controller.address, makeBeginCircleJettonWalletResolutionMessage(11), { value: grams("0.1") });
+    expect(contract.circleJettonWalletLookupPending()).toBeTrue();
+
+    val staleResponse = contract.sendAny(
+        usdtMaster.address,
+        ResponseWalletAddress {
+            queryId: 10,
+            jettonWalletAddress: canonicalCircleWallet.address,
+            ownerAddress: contract.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+    expect(staleResponse).toHaveFailedTx({
+        from: usdtMaster.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletQueryMismatch,
+    });
+}
+
+get fun `test round contribution rejected before circle wallet resolution`() {
+    val (contract, controller, alice, _, outsider, _, _) = setupUnresolvedCircle();
+
+    contract.sendAddMember(
+        controller.address,
+        1,
+        alice.address,
+        1,
+        { value: grams("0.1") }
+    );
+
+    val notifCell = beginCell()
+        .storeUint(0x7362d09c, 32)
+        .storeUint(1, 64)
+        .storeCoins(20000000)
+        .storeAddress(alice.address)
+        .storeBool(false)
+        .storeUint(0x434F4E54, 32)
+        .storeUint(1, 8)
+        .endCell();
+
+    val notif = contract.sendAny(
+        outsider.address,
+        notifCell,
+        { value: grams("0.05") }
+    );
+    expect(notif).toHaveFailedTx({
+        from: outsider.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletNotResolved,
+    });
+}
+
+get fun `test payout dispatch rejected before circle wallet resolution`() {
+    val (contract, controller, _) = setupUnresolvedCircleForPayoutDispatch();
+
+    val res = contract.sendAny(
+        controller.address,
+        makeDispatchPayoutMessage(1),
+        { value: grams("0.15") }
+    );
+    expect(res).toHaveFailedTx({
+        from: controller.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletNotResolved,
+    });
+}
+
+get fun `test settlement dispatch rejected before circle wallet resolution`() {
+    val (contract, _, alice, _) = setupUnresolvedCircleForSettlementDispatch();
+
+    val res = contract.sendAny(
+        alice.address,
+        makeDispatchSettlementMessage(11),
+        { value: grams("0.15") }
+    );
+    expect(res).toHaveFailedTx({
+        from: alice.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletNotResolved,
+    });
+}
+
+get fun `test protocol fee withdrawal dispatch rejected before circle wallet resolution`() {
+    val (contract, _, _, protocolTreasury) = setupUnresolvedCircleForSettlementDispatch();
+
+    val res = contract.sendAny(
+        protocolTreasury.address,
+        makeDispatchProtocolFeeWithdrawalMessage(21),
+        { value: grams("0.15") }
+    );
+    expect(res).toHaveFailedTx({
+        from: protocolTreasury.address,
+        to: contract.address,
+        exitCode: TontineErrors.CircleWalletNotResolved,
+    });
+}
+
+// ==================================================================
+// CHANTIER 3: HARDEN BOUNCES TESTS (RICH BOUNCE, PROTOCOL FEE, MALFORMED)
+// ==================================================================
+
+fun makeRichBouncedAskToTransfer(
+    queryId: uint64,
+    jettonAmount: coins,
+): cell {
+    val origBody = beginCell()
+        .storeUint(0x0f8a7ea5, 32)
+        .storeUint(queryId, 64)
+        .storeCoins(jettonAmount)
+        .endCell();
+
+    return beginCell()
+        .storeUint(0xfffffffe, 32)
+        .storeRef(origBody)
+        .endCell();
+}
+
+get fun `test simulated 256 bit truncated bounce resets protocol fee dispatch safely`() {
+    val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
+    advanceToCompletedCircle(contract, controller, alice, bob, usdtWallet);
+    completeAllMemberSettlements(contract, alice, bob);
+
+    val protocolTreasury = testing.treasury("protocol-treasury");
+    val treasuryWallet = testing.treasury("treasury-fee-trunc-w");
+    val master = testing.treasury("usdt-master");
+
+    contract.sendAny(protocolTreasury.address, makeBeginProtocolFeeWithdrawalMessage(21), { value: grams("0.1") });
+    contract.sendAny(
+        master.address,
+        ResponseWalletAddress {
+            queryId: 21,
+            jettonWalletAddress: treasuryWallet.address,
+            ownerAddress: protocolTreasury.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+
+    contract.sendAny(protocolTreasury.address, makeDispatchProtocolFeeWithdrawalMessage(21), { value: grams("0.15") });
+    expect(contract.protocolFeeWithdrawalDispatched()).toBeTrue();
+    expect(contract.protocolFeeWithdrawalDispatchedAt()).toBeGreater(0);
+
+    // Send authentic 256-bit TVM truncated bounce for protocol fee (50 USDT)
+    val truncatedBounce = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: makeTruncatedBouncedAskToTransfer(21, 50000000),
+    }).bounced();
+
+    testing.processSingleTraceStep(usdtWallet.address, truncatedBounce);
+
+    expect(contract.protocolFeeWithdrawalDispatched()).toBeFalse();
+    expect(contract.protocolFeeWithdrawalDispatchedAt()).toEqual(0);
+    expect(contract.protocolFeeWithdrawalPending()).toBeTrue();
+}
+
+get fun `test synthetic TVM 12 RichBounceBody parsing is safely processed for payout`() {
+    val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
+    prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
+    fundFullRoundOne(contract, usdtWallet, alice, bob);
+
+    contract.sendAny(controller.address, makePreparePayoutMessage(1), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1), { value: grams("0.1") });
+
+    val master = testing.treasury("usdt-master");
+    val aliceWallet = testing.treasury("alice-rich-bounce-w");
+    contract.sendAny(
+        master.address,
+        ResponseWalletAddress {
+            queryId: 1,
+            jettonWalletAddress: aliceWallet.address,
+            ownerAddress: alice.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+
+    contract.sendAny(controller.address, makeDispatchPayoutMessage(1), { value: grams("0.15") });
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // Send synthetic TVM 12 RichBounce format (0xfffffffe)
+    val richBounce = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: makeRichBouncedAskToTransfer(1, 55000000),
+    }).bounced();
+
+    testing.processSingleTraceStep(usdtWallet.address, richBounce);
+
+    expect(contract.payoutDispatched()).toBeFalse();
+    expect(contract.payoutDispatchedAt()).toEqual(0);
+    expect(contract.payoutPending()).toBeTrue();
+}
+
+get fun `test malformed or unauthorized RichBounce is safely dropped without underflow`() {
+    val (contract, controller, alice, bob, outsider, usdtWallet, _) = setupTest();
+    prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
+    fundFullRoundOne(contract, usdtWallet, alice, bob);
+
+    contract.sendAny(controller.address, makePreparePayoutMessage(1), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1), { value: grams("0.1") });
+
+    val master = testing.treasury("usdt-master");
+    val aliceWallet = testing.treasury("alice-rich-malf-w");
+    contract.sendAny(
+        master.address,
+        ResponseWalletAddress {
+            queryId: 1,
+            jettonWalletAddress: aliceWallet.address,
+            ownerAddress: alice.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+
+    contract.sendAny(controller.address, makeDispatchPayoutMessage(1), { value: grams("0.15") });
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // 1. Rebond TVM 12 provenant d'un tiers non autorisé (outsider) : ignoré immédiatement
+    val unauthorizedRichBounce = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: makeRichBouncedAskToTransfer(1, 55000000),
+    }).bounced();
+    testing.processSingleTraceStep(outsider.address, unauthorizedRichBounce);
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // 2. Rebond TVM 12 malformé sans référence pour originalBody (remainingRefsCount == 0)
+    // provenant de usdtWallet : ignoré proprement sans lever Cell Underflow
+    val malformedRichBounce = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: beginCell().storeUint(0xfffffffe, 32).endCell(),
+    }).bounced();
+    testing.processSingleTraceStep(usdtWallet.address, malformedRichBounce);
+    expect(contract.payoutDispatched()).toBeTrue();
+}
+
+get fun `test malformed bounce bodies are safely dropped without throwing unhandled exceptions`() {
+    val (contract, controller, alice, bob, _, usdtWallet, _) = setupTest();
+    prepareActiveCircle(contract, controller, alice, bob, usdtWallet);
+    fundFullRoundOne(contract, usdtWallet, alice, bob);
+
+    contract.sendAny(controller.address, makePreparePayoutMessage(1), { value: grams("0.1") });
+    contract.sendAny(controller.address, makeResolvePayoutWalletMessage(1), { value: grams("0.1") });
+
+    val master = testing.treasury("usdt-master");
+    val aliceWallet = testing.treasury("alice-malf-w");
+    contract.sendAny(
+        master.address,
+        ResponseWalletAddress {
+            queryId: 1,
+            jettonWalletAddress: aliceWallet.address,
+            ownerAddress: alice.address.toCell(),
+        }.toCell(),
+        { value: grams("0.05") }
+    );
+
+    contract.sendAny(controller.address, makeDispatchPayoutMessage(1), { value: grams("0.15") });
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // 1. Bounce body with fewer than 32 bits (< 32 bits)
+    val sub32Bits = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: beginCell().storeUint(0x12, 16).endCell(),
+    }).bounced();
+    testing.processSingleTraceStep(usdtWallet.address, sub32Bits);
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // 2. Bounce body with unrecognized prefix (e.g. 0x12345678)
+    val badPrefix = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: beginCell().storeUint(0x12345678, 32).storeUint(1, 64).endCell(),
+    }).bounced();
+    testing.processSingleTraceStep(usdtWallet.address, badPrefix);
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // 3. Bounce body with AskToTransfer having fewer than 100 bits
+    val sub100Bits = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: beginCell().storeUint(0xffffffff, 32).storeUint(0x0f8a7ea5, 32).storeUint(1, 32).endCell(),
+    }).bounced();
+    testing.processSingleTraceStep(usdtWallet.address, sub100Bits);
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // 4. Bounce body with truncated VarUInteger 16 (claims 10 bytes, but slice ends)
+    val truncatedCoins = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: beginCell()
+            .storeUint(0xffffffff, 32)
+            .storeUint(0x0f8a7ea5, 32)
+            .storeUint(1, 64)
+            .storeUint(10, 4) // specifies 10 bytes (80 bits) needed, but nothing follows
+            .endCell(),
+    }).bounced();
+    testing.processSingleTraceStep(usdtWallet.address, truncatedCoins);
+    expect(contract.payoutDispatched()).toBeTrue();
+
+    // 5. Bounce from master with fewer than 96 bits
+    val sub96BitsMaster = createMessage({
+        bounce: false,
+        value: grams("0.05"),
+        dest: contract.address,
+        body: beginCell().storeUint(0xffffffff, 32).storeUint(0x2c76b973, 32).storeUint(1, 16).endCell(),
+    }).bounced();
+    testing.processSingleTraceStep(master.address, sub96BitsMaster);
+    expect(contract.payoutDispatched()).toBeTrue();
 }
 

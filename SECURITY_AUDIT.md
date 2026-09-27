@@ -1,224 +1,225 @@
-# RAPPORT D'AUDIT DE SÉCURITÉ APPROFONDI — PROTOCOLE TONTINE V1 (TON / TOLK)
+# RAPPORT D'AUDIT DE SÉCURITÉ APPROFONDI & DURCISSEMENT — PROTOCOLE TONTINE V1 (TON / TOLK)
 
-**Date** : 26 Septembre 2026  
-**Auditeur principal & Lead Developer** : Antigravity (Security Engineering / TON Architecture)  
-**Projet** : `tontine-protocol-v1`  
-**Dépôt WSL** : `/home/dell_workstation/projects/tontine-protocol-v1`  
-**Outil de compilation et test** : Acton v1.2.0 (Tolk Smart Contract Language)  
-**Baseline initiale** : 52 tests passés / 52  
-**Baseline finale** : 74 tests passés / 74 (67 tests unitaires de sécurité dans `TontineCircle.test.tolk`, 3 tests d'intégration E2E réalistes dans `JettonIntegration.test.tolk`, 4 tests génériques dans `contract.test.tolk`)
+**Date** : 27 Septembre 2026
+**Lead Developer & Security Engineering** : Antigravity
+**Projet** : `tontine-protocol-v1`
+**Environnement de référence** : Acton v1.2.0 (Tolk Smart Contract Language, TVM Emulator)
+**Baseline Git immuable** : commit `3cc7643` (tag `baseline-74-tests`)
+**Résultats des tests** : **107 tests passés / 107 (100% SUCCÈS)**
+- 97 tests unitaires et de sécurité dans `tests/TontineCircle.test.tolk`
+- 6 tests d'intégration avec contrats Jetton réels dans `tests/JettonIntegration.test.tolk`
+- 4 tests de base de contrat dans `contracts/tests/contract.test.tolk`
 
 ---
 
 ## 1. Résumé Exécutif
 
-Une revue approfondie de la logique métier, du modèle de concurrence asynchrone TVM (TON Virtual Machine) et de l'intégrité financière du contrat `TontineCircle.tolk` a été réalisée. 
+À la suite de l'audit initial (portant la couverture à 74 tests) et d'un contre-audit indépendant, un programme complet de durcissement technique a été réalisé sur le contrat `TontineCircle.tolk` et sa suite de tests. La suite passe désormais avec succès **107 tests sur 107**.
 
-Plusieurs vulnérabilités critiques et majeures ont été identifiées et corrigées directement dans le code source :
-1. **[CRITIQUE] TVM 256-Bit Bounce Underflow & Freeze** : La désérialisation de structures complètes (`AskToTransfer`, `RequestWalletAddress`) dans les gestionnaires de bounce TVM provoquait systématiquement une erreur 9 (cell underflow) sur TON réel, gelant irrémédiablement le protocole.
-2. **[MAJEURE] Absence de validation globale d'anti-rejeu et de causalité (`queryId`)** : Absence de monotonie sur `msg.queryId`, permettant à des messages différés ou rejoués (excesses, lookups, bounces) de corrompre des étapes ultérieures du cycle de vie ou d'autres opérations.
-3. **[MAJEURE] Dépendance Circulaire TVM à l'Initialisation (`usdtWallet`)** : Impossibilité mathématique de déployer le cercle et son jetton wallet sans un canal de configuration post-déploiement.
-4. **[MOYENNE] Vulnérabilité au Tronquage de Message (< 32 bits)** : Crash TVM non géré lors de la réception de messages internes de moins de 32 bits.
-
-Tous les correctifs ont été implémentés dans le respect strict des invariants économiques, sans affaiblir aucune assertion ni supprimer de test. **74 tests sur 74 sont validés avec succès**.
-
----
-
-## 2. Architecture du Protocole & Modèle Économique
-
-Le contrat `TontineCircle` régit une association rotative d'épargne et de crédit (tontine financière) à 10 participants opérant en USDT (Jetton TEP-74) sur la blockchain TON :
-
-- **Membres** : Exactement 10 participants (`memberCount = 10`), chacun assigné à un tour unique (1 à 10).
-- **Caution individuelle (Personal Bond)** : 40 USDT par membre versés lors de l'enregistrement, soit 400 USDT immobilisés au total.
-- **Contribution par tour** : 20 USDT par membre par tour.
-- **Pot brut par tour** : $10 \times 20 = 200$ USDT.
-- **Frais de protocole** : 2.5% du pot brut = 5 USDT prélevés à chaque tour, crédités au bénéficiaire de la trésorerie (`protocolTreasury`).
-- **Garantie / Séquestre d'épargne (Escrow)** : Lors du tour $R$, la dette future du bénéficiaire est de $(10 - R) \times 20$ USDT. Une retenue de séquestre garantissant 50% de cette dette restante est prélevée sur le pot :
-  $$\text{Escrow}(R) = \frac{(10 - R) \times 20}{2} = (10 - R) \times 10\text{ USDT}$$
-- **Paiement net au bénéficiaire** :
-  $$\text{NetPayout}(R) = 200 - 5 - \text{Escrow}(R)$$
-  - *Exemple Tour 1* : Dette future = 180 USDT $\implies$ Escrow = 90 USDT $\implies$ Frais = 5 USDT $\implies$ Net = 105 USDT (ou 55 USDT si retenue additionnelle de sécurité selon calibrage actif).
-- **Règlement final (Settlement)** : Une fois les 10 tours complétés, chaque membre à jour de ses contributions récupère l'intégralité de sa caution (40 USDT) et de son séquestre accumulé.
-- **Retrait des frais de protocole** : Les 50 USDT accumulés (10 tours $\times$ 5 USDT) ne peuvent être retirés par la trésorerie qu'**après** le règlement intégral des 10 membres (`memberSettlementsCompleted == 10`).
+### Synthèse des Chantiers Réalisés :
+1. **Anti-Rejeu Strict Séquentiel (Chantier 1)** : Contrainte stricte `msg.queryId == lastOperationQueryId + 1` sur chaque opération modifiant l'état global (`PreparePayout`, `BeginSettlement`, `BeginProtocolFeeWithdrawal`), avec garde défensive contre le débordement à $2^{64}-1$ (`QueryIdOverflow = 1501`). Les étapes intermédiaires (résolution de wallet, dispatches) préservent le `queryId` sans faire progresser le compteur global.
+2. **Résolution Canonique du Circle Jetton Wallet (Chantier 2)** : Suppression de l'injection arbitraire `SetCircleJettonWallet`. Résolution canonique one-shot via `BeginCircleJettonWalletResolution` (op `0x52434A57`) auprès du contrat minter officiel `usdtMaster` (standard TEP-89), avec authentification de l'expéditeur (`in.senderAddress == config.usdtMaster`) et vérification d'identité (`ownerAddress == contract.getAddress()`). Les dépôts (cautions, cotisations) et dispatches sont conditionnés par `circleWalletResolved`.
+3. **Durcissement des Bounces TVM (Chantier 3)** : Authentification préalable de l'expéditeur du rebond (seuls `usdtWallet` et `usdtMaster` sont autorisés). Bornage de taille minimale (100 bits pour `AskToTransfer`, 96 bits pour `RequestWalletAddress`), validation TL-B de longueur `VarUInteger 16`. Gestion défensive des rebonds TVM 256 bits (`0xffffffff`) et prise en charge synthétique du préfixe TVM 12 `RichBounceBody` (`0xfffffffe`) avec vérification des références (`remainingRefsCount() >= 1`). Réinitialisation de l'état lors d'un rebond sur le retrait des frais de protocole.
+4. **Test de Bounce Réel sur Émulateur TVM (Chantier 4)** : Émulation d'une erreur de solde réelle (`Errors.BalanceError = 47`) sur un portefeuille Jetton réel déployé sur la TVM, provoquant un rebond TVM authentique vers `TontineCircle` et réinitialisant `payoutDispatched = false`.
+5. **Intégration Jetton Entrante E2E (Chantier 5)** : Flux complet d'exécution `JettonWallet.sendTransfer` (AskToTransfer) $\to$ `circleWallet` (InternalTransferStep) $\to$ `TontineCircle` (TransferNotificationForRecipient), validant la mise à jour des positions de membre (caution et cotisation) à partir de transferts Jetton réels.
+6. **Vérification de Solvabilité sur Solde Jetton Réel (Chantier 6)** : Concordance comptable stricte entre la somme dynamique des passifs calculée via les getters du contrat ($\sum \text{bondLocked} + \sum \text{escrowLocked} + \text{protocolFeesAccrued} = 1010$ USDT) et le solde effectif `circleWallet.getWalletData().jettonBalance` au terme des 10 tours.
+7. **Documentation de Provenance des Contrats Jetton (Chantier 7)** : Rédaction de `contracts/jetton/UPSTREAM.md` documentant la source Acton v1.2.0, les interfaces TEP-74/89 et les adaptations effectuées.
+8. **Modèle Économique & Bilan Financier (Chantier 8)** : Formulation exacte du séquestre et publication du bilan financier détaillé.
 
 ---
 
-## 3. Analyse du Modèle de Menaces Spécifique à TON
+## 2. Modèle Économique & Formules Mathématiques Exactes
 
-La blockchain TON présente un modèle d'exécution asynchrone à passage de messages (Actor Model) fondamentalement différent de l'EVM :
-- **Non-atomicité inter-contrats** : Les appels entre le cercle, le minter Jetton et les jetton wallets sont asynchrones. Un envoi de message peut réussir alors que son traitement distant échoue.
-- **Bounces TVM tronqués à 256 bits** : Lorsqu'un message rebondit avec le mode par défaut `BounceMode.Only256BitsOfBody`, la TVM ne renvoie que les 256 premiers bits du corps original, précédés du préfixe de bounce (32 bits de 0xFFFFFFFF).
-- **Exécution hors ordre (Out-of-Order Execution)** : Les messages peuvent arriver dans un ordre différent de celui de leur émission.
-- **Rogue Jetton Wallets** : Tout attaquant peut déployer un faux portefeuille Jetton et envoyer de faux messages de notification (`transfer_notification`) ou de retour d'excès (`excesses`).
+Le contrat `TontineCircle` régit une association rotative d'épargne et de crédit (tontine financière) à 10 participants opérant en USDT (Jetton TEP-74, 6 décimales) :
+
+- **Membres** : Exactement 10 participants (`memberCount = 10`), assignés aux tours 1 à 10.
+- **Caution personnelle (Personal Bond)** : 40 USDT par membre déposés en phase `OPEN`, soit 400 USDT immobilisés au total.
+- **Cotisation par tour** : 20 USDT par membre par tour actif.
+- **Collecte brute par tour** : $10 \times 20 = 200$ USDT (`roundCollected`).
+- **Frais de protocole par tour** : $2.5\%$ du pot brut = 5 USDT prélevés à chaque tour (`roundCollected * protocolFeeBps / 10000`).
+
+### Formule Canonique du Séquestre (Escrow)
+À chaque tour $R \in [1, 10]$, la dette future du bénéficiaire s'élève à :
+$$\text{remainingDebt}(R) = (10 - R) \times 20\text{ USDT}$$
+
+Le protocole couvre cette dette prioritairement par les garanties hors-séquestre, constituées de la caution déjà consignée et de $50\%$ des garanties actives reconnues (P2P et protocole) :
+$$\text{coverageOutsideEscrow} = \text{bondLocked} + \frac{\text{p2pGuaranteeActive} + \text{protocolGuaranteeActive}}{2}$$
+
+En l'absence de garanties additionnelles ($\text{garanties} = 0$), la retenue de séquestre sur le pot du tour est strictement :
+$$\text{Escrow}(R) = \max\Big(0,\; \text{remainingDebt}(R) - \text{bondLocked}\Big) = \max\Big(0,\; (10 - R) \times 20 - 40\Big)$$
+
+Le montant décaissé net au bénéficiaire du tour est :
+$$\text{NetPayout}(R) = \text{roundCollected} - \text{Escrow}(R) - \text{ProtocolFee}(R) = 200 - \text{Escrow}(R) - 5$$
+
+### Tableau Bilan des 10 Tours
+| Tour ($R$) | Bénéficiaire | Dette Restante | Caution | Séquestre Retenu | Frais Protocole | Paiement Net |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1** | Membre 1 | 180 USDT | 40 USDT | **140 USDT** | 5 USDT | **55 USDT** |
+| **2** | Membre 2 | 160 USDT | 40 USDT | **120 USDT** | 5 USDT | **75 USDT** |
+| **3** | Membre 3 | 140 USDT | 40 USDT | **100 USDT** | 5 USDT | **95 USDT** |
+| **4** | Membre 4 | 120 USDT | 40 USDT | **80 USDT** | 5 USDT | **115 USDT** |
+| **5** | Membre 5 | 100 USDT | 40 USDT | **60 USDT** | 5 USDT | **135 USDT** |
+| **6** | Membre 6 | 80 USDT | 40 USDT | **40 USDT** | 5 USDT | **155 USDT** |
+| **7** | Membre 7 | 60 USDT | 40 USDT | **20 USDT** | 5 USDT | **175 USDT** |
+| **8** | Membre 8 | 40 USDT | 40 USDT | **0 USDT** | 5 USDT | **195 USDT** |
+| **9** | Membre 9 | 20 USDT | 40 USDT | **0 USDT** | 5 USDT | **195 USDT** |
+| **10** | Membre 10 | 0 USDT | 40 USDT | **0 USDT** | 5 USDT | **195 USDT** |
+| **TOTAL** | — | — | — | **560 USDT** | **50 USDT** | **1390 USDT** |
+
+### Bilan Comptable
+1. **Entrées prévues du cycle complet** :
+   - 10 Cautions de 40 USDT = 400 USDT
+   - 10 Tours $\times$ 10 Cotisations de 20 USDT = 2000 USDT
+   - **Total collecté** = $400 + 2000 = 2400$ USDT
+2. **Sorties de paiements (Payouts)** :
+   - Somme des décaissements nets des tours 1 à 10 = **1390 USDT**
+3. **Actifs résiduels en coffre** :
+   $$\text{Solde Jetton restant} = 2400 - 1390 = \mathbf{1010\text{ USDT}}$$
+4. **Passifs exigibles au règlement (Settlement)** :
+   - Cautions restituables : $10 \times 40 = 400$ USDT
+   - Séquestres restituables : 560 USDT
+   - Total passif envers les membres : $400 + 560 = 960$ USDT
+   - Frais de protocole accumulés (pour la trésorerie) : 50 USDT
+   - **Total passif global** = $960 + 50 = \mathbf{1010\text{ USDT}}$
+
+L'égalité $\text{Actifs en coffre} \equiv \text{Passifs exigibles} = 1010$ USDT est vérifiée unitairement et en test d'intégration sur émulateur TVM.
 
 ---
 
-## 4. Vulnérabilités Identifiées, Exploits & Correctifs
+## 3. Détail des Correctifs Techniques de Sécurité
 
-### VULN-01 [CRITIQUE] : Cell Underflow (Erreur 9) sur Bounces TVM Tronqués
-- **Composant** : `contracts/TontineCircle.tolk` (`onBouncedMessage`)
-- **Mécanisme** :
-  La TVM ne renvoie que **256 bits** du corps original lors d'un bounce standard (`BounceMode.Only256BitsOfBody`).
-  L'ancienne implémentation désérialisait la structure complète `AskToTransfer` :
-  - `queryId: uint64` (64 bits)
-  - `jettonAmount: coins` (4 à 124 bits)
-  - `transferRecipient: address` (267 bits)
-  - `sendExcessesTo: address?`
-  Total : > 335 bits.
-- **Impact** : Lors d'un bounce réel (ex: échec d'action sur le wallet, gas insuffisant sur le jetton wallet récepteur), la tentative de lecture de `transferRecipient` déclenchait l'exception TVM 9 (`Cell Underflow`). Le message de bounce échouait, et l'état du cercle restait bloqué indéfiniment en `payoutDispatched = true` ou `settlementDispatched = true`, interdisant tout nouveau dispatch et gelant les fonds du cercle.
-- **Scénario d'attaque / d'échec** :
-  1. Le cercle dispatche un paiement de tour vers le JettonWallet.
-  2. Le JettonWallet rebondit le message (erreur temporaire de balance ou gas).
-  3. Le cercle reçoit le message bounced tronqué à 256 bits.
-  4. La fonction `onBouncedMessage` plante avec l'erreur 9.
-  5. L'état `payoutDispatchedAt` n'est jamais réinitialisé. Les fonds du tour et la tontine sont bloqués à jamais.
-- **Correctif apporté** :
-  Création de structures de bounce TVM dédiées dans `tontineTypes.tolk` ne lisant que les champs garantis dans les 256 bits :
+### 1. Anti-Rejeu Strict Séquentiel (`msg.queryId`)
+- Chaque initiation majeure (`PreparePayout`, `BeginSettlement`, `BeginProtocolFeeWithdrawal`) applique les vérifications :
   ```tolk
-  struct (0x0f8a7ea5) BouncedAskToTransfer {
-      queryId: uint64
-      jettonAmount: coins
-  }
-  struct (0x2c76b973) BouncedRequestWalletAddress {
-      queryId: uint64
-  }
+  assert (protocolState.lastOperationQueryId < 18446744073709551615)
+      throw TontineErrors.QueryIdOverflow;
+
+  assert (msg.queryId == protocolState.lastOperationQueryId + 1)
+      throw TontineErrors.ReplayedQueryId;
   ```
-  Ajout d'un garde de taille minimale :
+- Les opérations de retry et de dispatch (`ResolvePayoutWallet`, `DispatchPayout`, `RetrySettlementWallet`, `DispatchSettlement`, etc.) exigent strictement l'égalité avec le `queryId` de l'opération en cours sans avancer le compteur global.
+- **Analyse du cycle de vie du nonce** : Un cycle complet de tontine comporte exactement 21 opérations modifiant `lastOperationQueryId` (10 `PreparePayout` + 10 `BeginSettlement` + 1 `BeginProtocolFeeWithdrawal`). La valeur maximale $2^{64}-1 \approx 1.84 \times 10^{19}$ est mathématiquement inaccessible dans des conditions normales. Le contrôle de débordement constitue une mesure de sécurité défensive.
+
+### 2. Résolution du Wallet Jetton du Cercle
+- Suppression de l'affectation manuelle par le contrôleur.
+- Résolution standard TEP-89 vers `usdtMaster` :
   ```tolk
-  if (in.bouncedBody.remainingBitsCount() < 32) return;
+  val lookupMsg = createMessage({
+      bounce: BounceMode.Only256BitsOfBody,
+      value: grams("0.05"),
+      dest: config.usdtMaster,
+      body: RequestWalletAddress {
+          queryId: msg.queryId,
+          ownerAddress: contract.getAddress(),
+          includeOwnerAddress: true,
+      },
+  });
   ```
-  Réinitialisation correcte et sécurisée des timestamps de dispatch (`payoutDispatchedAt = 0`, `settlementDispatchedAt = 0`, `withdrawalDispatchedAt = 0`).
-
----
-
-### VULN-02 [MAJEURE] : Absence de Monotonie Globale des `queryId` & Risque de Rejeu Inter-Opérations
-- **Composant** : `contracts/TontineCircle.tolk`, `contracts/tontineTypes.tolk`
-- **Mécanisme** :
-  Les opérations administratives (`PreparePayout`, `BeginSettlement`, `BeginProtocolFeeWithdrawal`) acceptaient n'importe quel `queryId: uint64`. Deux tours ou deux règlements successifs pouvaient réutiliser le même `queryId`.
-- **Impact** :
-  Un message différé sur le réseau TON (ex: un accusé de réception `ReturnExcessesBack` ou un bounce d'une opération passée ayant pris du retard) pouvait arriver pendant l'exécution d'une opération ultérieure partageant le même `queryId`, validant ou annulant prématurément une opération en cours.
-- **Scénario d'attaque** :
-  1. Le tour 1 s'exécute avec `queryId = 100`. Le transfert d'excès est retardé par encombrement du shard.
-  2. Le tour 2 est préparé avec le même `queryId = 100`.
-  3. L'excès du tour 1 arrive et valide immédiatement le tour 2 avant même que le paiement du tour 2 n'ait été réellement expédié.
-- **Correctif apporté** :
-  1. Ajout de `lastOperationQueryId: uint64` dans `ProtocolState`.
-  2. Vérification d'ordre strictement croissant sur chaque initiation d'opération :
-     ```tolk
-     assert (msg.queryId > protocolState.lastOperationQueryId) throw TontineErrors.ReplayedQueryId;
-     protocolState.lastOperationQueryId = msg.queryId;
-     ```
-  3. Conservation rigoureuse du `queryId` valide sur les étapes internes de retry (`ResolvePayoutWallet`, `DispatchPayout`, `RetrySettlementWallet`, etc.).
-  4. Exposition du getter public `lastOperationQueryId(): uint64`.
-
----
-
-### VULN-03 [MAJEURE] : Dépendance Circulaire TVM de l'Adresse `usdtWallet`
-- **Composant** : `contracts/tontineTypes.tolk`, `contracts/TontineCircle.tolk`
-- **Mécanisme** :
-  L'adresse d'un contrat TON est le hachage SHA-256 de son code et de ses données initiales :
-  $$\text{Addr}_{\text{Circle}} = \text{Hash}(\text{Code}_{\text{Circle}}, \text{Data}_{\text{Circle}}(\text{usdtWallet}))$$
-  Or, l'adresse du JettonWallet associé au cercle dépend de l'adresse du propriétaire :
-  $$\text{Addr}_{\text{Wallet}} = \text{Hash}(\text{Code}_{\text{Wallet}}, \text{Data}_{\text{Wallet}}(\text{ownerAddress} = \text{Addr}_{\text{Circle}}))$$
-  Si `usdtWallet` doit être figé dans les données initiales de `TontineCircle`, il est cryptographiquement impossible de déployer le cercle et son jetton wallet sans résoudre une collision de hachage $A = H(H(A))$.
-- **Impact** : Impossible de déployer le contrat sur le testnet/mainnet avec des portefeuilles Jetton récents sans mock.
-- **Correctif apporté** :
-  Ajout du message administratif sécurisé `SetCircleJettonWallet` (`op = 0x53544A57`) :
-  - Autorisé uniquement en état `OPEN` (état 1).
-  - Autorisé uniquement tant qu'aucune caution n'a été déposée (`fundedBondCount == 0`).
-  - Strictement restreint au `controller`.
-  Permet de déployer le contrat cercle, de dériver canoniquement son adresse de JettonWallet via le minter, puis de lier officiellement le wallet avant l'ouverture des souscriptions.
-
----
-
-### VULN-04 [MOYENNE] : Crash TVM sur Messages Internes Courts (< 32 bits)
-- **Composant** : `contracts/TontineCircle.tolk` (`onInternalMessage`)
-- **Mécanisme** :
-  Le point d'entrée exécutait `in.body.preloadUint(32)` dès lors que le corps n'était pas vide (`!in.body.isEmpty()`). Un message contenant entre 1 et 31 bits provoquait un crash TVM 9 sans code d'erreur explicite.
-- **Impact** : Consommation inutile de gas et absence d'erreur normalisée.
-- **Correctif apporté** :
+- Réception et authentification :
   ```tolk
-  if (in.body.remainingBitsCount() < 32) {
-      throw TontineErrors.InvalidMessage;
+  assert (in.senderAddress == config.usdtMaster)
+      throw TontineErrors.UnauthorizedJettonWallet;
+
+  if (!config.circleWalletResolved && config.circleWalletLookupPending) {
+      assert (msg.queryId == config.circleWalletQueryId)
+          throw TontineErrors.CircleWalletQueryMismatch;
+
+      assert (msg.ownerAddress != null)
+          throw TontineErrors.JettonWalletOwnerMismatch;
+
+      assert (msg.ownerAddress!.load() == contract.getAddress())
+          throw TontineErrors.JettonWalletOwnerMismatch;
+
+      assert (msg.jettonWalletAddress != null)
+          throw TontineErrors.WalletNotResolved;
+
+      storage.usdtWallet = msg.jettonWalletAddress;
+      config.circleWalletResolved = true;
+      config.circleWalletLookupPending = false;
+      ...
   }
   ```
+- L'opération `BeginCircleJettonWalletResolution` est réservée au contrôleur et n'est autorisée qu'en phase `OPEN` (`state == 1`) tant qu'aucun dépôt de caution n'a été enregistré (`fundedBondCount == 0`).
+- Les notifications de transfert et les fonctions de dispatch vérifient `config.circleWalletResolved` et `storage.usdtWallet != null`.
+
+### 3. Durcissement Résilient des Bounces TVM
+- Le protocole utilise exclusivement `BounceMode.Only256BitsOfBody` sur ses messages sortants et n'émet pas de messages au format `RichBounce`.
+- Dans `onBouncedMessage`, l'authentification de l'expéditeur est effectuée avant tout décodage :
+  ```tolk
+  val isCircleWallet = (storage.usdtWallet != null && in.senderAddress == storage.usdtWallet!);
+  val isMaster = (in.senderAddress == config.usdtMaster);
+  if (!isCircleWallet && !isMaster) {
+      return;
+  }
+  ```
+- Bornages de sécurité et vérification de structure :
+  - Rejet si la taille est inférieure à 32 bits.
+  - Rejet sur `AskToTransfer` si la taille est inférieure à 100 bits (op 32 bits + queryId 64 bits + préfixe de longueur VarUInteger 16 de 4 bits).
+  - Validation du format TL-B de `VarUInteger 16` (`neededCoinsBits = 4 + coinsByteLen * 8`).
+  - Rejet sur `RequestWalletAddress` si la taille est inférieure à 96 bits (op 32 bits + queryId 64 bits).
+- Support défensif synthétique pour TVM 12 :
+  - Préfixe standard TVM 256 bits (`0xffffffff`) : `bounceBody.skipBouncedPrefix()`.
+  - Préfixe TVM 12 `RichBounceBody` (`0xfffffffe`) : vérification préalable `if (bounceBody.remainingRefsCount() < 1) { return; }` avant accès à `RichBounceBody.fromSlice(bounceBody)`.
+- Prise en charge du rebond lors du retrait des frais de protocole (`withdrawalDispatched = false`).
 
 ---
 
-## 5. Analyse Formelle des Invariants Financiers
+## 4. Compatibilité de Storage (Storage Compatibility)
 
-Le protocole garantit les invariants mathématiques et comptables suivants :
+> [!WARNING]
+> Les modifications structurelles introduites dans ce durcissement rompent la compatibilité binaire avec le layout de stockage de `baseline-74-tests`.
 
-### 1. Invariant de Solvabilité Globale
-À tout instant :
-$$\text{JettonBalance}(\text{Circle}) \ge \sum_{i=1}^{10} \text{bondLocked}_i + \sum_{i=1}^{10} \text{escrowLocked}_i + \text{protocolFeesAccrued}$$
-- **En fin de cycle (après 10 tours)** :
-  - Caution par membre : 40 USDT $\times$ 10 = 400 USDT.
-  - Séquestres accumulés : $90 + 80 + 70 + 60 + 50 + 40 + 30 + 20 + 10 + 0 = 450$ USDT (ou 560 USDT selon formule de retenue).
-  - Frais de protocole accumulés : 10 tours $\times$ 5 USDT = 50 USDT.
-  - Passif total du cercle : $400 + 560 + 50 = 1010$ USDT.
-  - Cet invariant a été formalisé et validé unitairement par le test `accounting invariants: 960 liabilities 50 fees 1010 total`.
+### Ruptures de Layout Identifiées :
+1. **Ajout de `usdtWallet: address?`** dans la cellule racine de `TontineStorage`.
+2. **Enrichissement de `JettonMasterConfig`** avec les champs :
+   - `circleWalletLookupPending: bool`
+   - `circleWalletResolved: bool`
+   - `circleWalletQueryId: uint64`
 
-### 2. Priorité Absolue des Membres sur les Frais
-Le retrait des frais par la trésorerie (`BeginProtocolFeeWithdrawal`) impose la condition stricte :
-$$\text{memberSettlementsCompleted} == 10$$
-Aucun frais de protocole ne peut quitter le contrat tant que le moindre centime d'un participant reste à régler.
+### Conséquences Opérationnelles :
+- **Déploiement frais requis** : Ce contrat ne peut pas être déployé comme une mise à jour (code upgrade) sur un contrat existant déployé sous `baseline-74-tests`. La tentative de désérialisation du storage échouerait avec une exception de désérialisation / Cell Underflow.
+- **Évolutions futures** : Toute mise à niveau on-chain ultérieure nécessitera soit un contrat proxy de migration, soit un versioning explicite du schéma de stockage (ex: tag de version dans la cellule racine).
 
 ---
 
-## 6. Analyse Stratégique de l'État "Stale Dispatch"
+## 5. Couverture des Tests et Validation
 
-Une attention particulière a été portée au traitement d'un dispatch resté en suspens (timeout / délai réseau).
-
-### Pourquoi un retry aveugle et automatisé est STRICTEMENT PROSCRIT :
-Sur TON, la perte ou le retard d'un message `excesses` ne signifie **PAS** que le transfert a échoué.
-Deux cas indiscernables peuvent survenir lors d'un timeout :
-- **Cas A** : Le JettonWallet a bien crédité le bénéficiaire, mais le message `ReturnExcessesBack` a manqué de gas ou a été retardé dans la file d'attente d'un shard.
-- **Cas B** : Le message `AskToTransfer` n'est jamais parvenu au JettonWallet.
-
-Si le protocole implémentait un mécanisme de réexpédition automatique sur timeout sans preuve on-chain de non-paiement, il s'exposerait au **double-paiement** (double-spend) dans le cas A. 
-
-**Décision d'architecture V1** :
-- Le dispatch stale conserve son verrouillage et son timestamp.
-- Aucun retry automatique n'est autorisé.
-- La résolution en V1 doit être accompagnée d'une vérification opérationnelle d'état ou d'un mécanisme de réconciliation on-chain sécurisé (détaillé dans `SECURITY_TODO.md` pour la V2).
-
----
-
-## 7. Couverture des Tests et Validation
-
-### Résumé des Résultats de Test
-| Fichier de Test | Tests | Statut |
+### Bilan Global des Tests
+| Fichier de Test | Nombre de Tests | Résultat |
 | :--- | :---: | :---: |
-| `tests/TontineCircle.test.tolk` | **67** | **100% SUCCÈS** |
-| `tests/JettonIntegration.test.tolk` | **3** | **100% SUCCÈS** |
 | `contracts/tests/contract.test.tolk` | **4** | **100% SUCCÈS** |
-| **Total Global** | **74** | **100% SUCCÈS** |
+| `tests/JettonIntegration.test.tolk` | **6** | **100% SUCCÈS** |
+| `tests/TontineCircle.test.tolk` | **97** | **100% SUCCÈS** |
+| **TOTAL** | **107** | **100% SUCCÈS** |
 
-### Détail des Tests de Sécurité Ajoutés
-1. `prepare payout rejects non monotonic queryId` : Rejet des queryId réutilisés ou décroissants sur payout.
-2. `settlement rejects non monotonic queryId and replay across operations` : Rejet des collisions de queryId entre règlements et payouts.
-3. `protocol fee withdrawal rejects non monotonic queryId` : Monotonie stricte sur les frais.
-4. `delayed excess cannot finalize subsequent round payout` : Protection contre les retours d'excès asynchrones tardifs.
-5. `delayed wallet response cannot resolve subsequent round lookup` : Protection contre les résolutions d'adresses différées.
-6. `delayed bounce from previous round does not reset dispatched on active payout` : Isolation des bounces tardifs.
-7. `real 256 bit truncated bounce resets payout dispatch safely` : Vérification de non-crash TVM sur bounce tronqué de payout.
-8. `real 256 bit truncated bounce resets settlement dispatch safely` : Vérification de non-crash TVM sur bounce tronqué de settlement.
-9. `real 256 bit truncated bounce resets wallet lookup safely` : Vérification de non-crash TVM sur lookup bounced.
-10. `malformed message with fewer than 32 bits is rejected cleanly` : Rejet propre des messages < 32 bits sans crash.
-11. `accounting invariants: 960 liabilities 50 fees 1010 total` : Validation formelle du bilan comptable.
-12. `cannot contribute or prepare payout in completed state` : Verrouillage strict de l'état post-completion.
-13. `non member cannot begin settlement` : Contrôle d'accès au règlement.
-14. `member cannot begin settlement before completed state` : Interdiction de retrait anticipé.
-15. `double protocol fee withdrawal is impossible` : Prévention du double retrait de commission.
-16. `integration: minter deploys and calculates wallet addresses` : Déploiement et calculs TEP-74/89 réels.
-17. `integration: circle resolves beneficiary wallet through real JettonMinter` : Résolution asynchrone E2E réelle.
-18. `integration: full payout dispatch and excess return with real Jetton contracts` : Flux complet de transfert, création de compte à la volée et notification d'excès.
+### Détail des Tests d'Intégration (`JettonIntegration.test.tolk`)
+1. `integration: minter deploys and calculates wallet addresses` : Déploiement du minter de référence et calcul StateInit d'adresses de portefeuille Jetton.
+2. `integration: circle resolves beneficiary wallet through real JettonMinter` : Résolution asynchrone réelle via `RequestWalletAddress` / `ResponseWalletAddress` entre contrats.
+3. `integration: full payout dispatch and excess return with real Jetton contracts` : Chaîne complète de décaissement de tour (`circle` $\to$ `circleWallet` $\to$ `beneficiaryWallet` $\to$ notification d'excès vers `circle`).
+4. `integration: genuine TVM emulator bounce on real JettonWallet balance error resets payout dispatch` : Erreur de balance réelle `Errors.BalanceError (47)` sur TVM, émission d'un bounce TVM authentique et réinitialisation de `payoutDispatched = false`.
+5. `integration: e2e inbound jetton transfer for bond funding and round contribution` : Dépôt entrant réel par un membre via son propre JettonWallet (`AskToTransfer` $\to$ `InternalTransferStep` $\to$ `TransferNotificationForRecipient`) validant la caution (40 USDT) et la cotisation (20 USDT).
+6. `integration: prefunded real jetton balance matches liabilities after ten real payouts` : Déroulement complet des 10 tours avec un pool pré-financé de 2400 USDT sur `circleWallet`, 10 transferts réels de paiement, et confirmation de l'égalité stricte entre passifs exigibles (960 USDT membres + 50 USDT frais = 1010 USDT) et solde Jetton résiduel (1010 USDT). (Les cotisations intermédiaires sont émises par notification depuis `circleWallet`, le flux de dépôt individuel complet étant couvert par le test E2E dédié).
 
 ---
 
-## 8. Risques Résiduels & Hypothèses de Sécurité
+## 6. Wrapper et Génération de Code
 
-1. **Rôle du Contrôleur** : Le contrôleur (`controller`) détient les prérogatives d'orchestration (ajout des membres, verrouillage, déclenchement des tours). En V1, ce contrôleur est une clé unique / contrat d'orchestration. Une transition vers un Multi-Sig ou une gouvernance décentralisée est recommandée avant le déploiement de capitaux majeurs.
-2. **Loyauté du Minter Jetton** : Le protocole s'appuie sur la véracité des réponses du contrat `usdtMaster` spécifié à la configuration. Un faux master pourrait injecter des adresses de portefeuille corrompues. L'adresse de l'USDT Tether officiel sur TON doit être auditée et inscrite immuablement au déploiement.
-3. **Solvabilité TON (Gas)** : Les transactions d'orchestration (`DISP`, `SETT`, `FWEE`) doivent être approvisionnées avec une quantité suffisante de TON (0.15 à 0.5 TON) pour couvrir la chaîne d'envois asynchrones.
+L'outillage Acton génère le wrapper `TontineCircle.gen.tolk` sur la base de la déclaration `incomingMessages` du contrat :
+```tolk
+type AllowedMessage = AddMember;
+
+contract TontineCircle {
+    ...
+    incomingMessages: AllowedMessage
+}
+```
+Seule la fonction typée `sendAddMember` ainsi que la fonction générique `sendAny` sont produites par le générateur. Les messages internes d'orchestration (`BeginCircleJettonWalletResolution`, `PreparePayout`, `DispatchPayout`, `BeginSettlement`, `DispatchSettlement`, `BeginProtocolFeeWithdrawal`, `DispatchProtocolFeeWithdrawal`) sont transmis via `contract.sendAny(...)` avec sérialisation de la cellule correspondante. Cette approche respecte le modèle standard Acton sans introduire d'abstraction artificielle.
+
+---
+
+## 7. Recommandations Pré-Mainnet & Risques Résiduels
+
+1. **Gouvernance Multi-Sig** : Le contrôleur (`controller`) détient des prérogatives d'orchestration (ajout de membres, verrouillage, préparation des paiements). Une transition vers un contrat Multi-Sig (ex: Ton-Multisig v2) est recommandée pour les cercles à enjeux financiers élevés.
+2. **Audit Externe Indépendant** : Un audit par une firme tierce spécialisée en sécurité TVM reste impératif avant tout déploiement en production avec des fonds utilisateurs réels.
+3. **Approvisionnement en Gas TON** : Les transactions d'orchestration multi-sauts doivent être pourvues d'au moins 0.2 à 0.5 TON pour couvrir sans défaillance les cascades de messages inter-contrats.
+4. **Déploiement Initial** : Le protocole nécessite un déploiement neuf en raison de la rupture de compatibilité de stockage avec la baseline.

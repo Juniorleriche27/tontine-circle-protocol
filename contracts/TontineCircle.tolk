@@ -87,15 +87,17 @@ fun onInternalMessage(in: InMessage) {
     }
 
     // ----------------------------------------------------------
-    // SET CIRCLE JETTON WALLET
-    // 0x53544A57 = "STJW"
-    // Permet de configurer l'adresse du JettonWallet propre au cercle
-    // après le calcul de l'adresse du contrat (résout la dépendance circulaire TVM).
+    // BEGIN CIRCLE JETTON WALLET RESOLUTION
+    // 0x52434A57 = "RCJW"
+    // Déclenche la découverte authentifiée du JettonWallet propre au cercle
+    // auprès du usdtMaster officiel (résout la dépendance circulaire TVM sans trust).
     // Accessible uniquement par le contrôleur en état OPEN avant tout dépôt.
     // ----------------------------------------------------------
-    if (op == 0x53544A57) {
-        val msg = lazy SetCircleJettonWallet.fromSlice(in.body);
+    if (op == 0x52434A57) {
+        val msg = lazy BeginCircleJettonWalletResolution.fromSlice(in.body);
         var storage = lazy TontineStorage.load();
+        var protocolState = storage.protocolState.load();
+        var config = protocolState.jettonMasterConfig.load();
 
         assert (in.senderAddress == storage.controller)
             throw TontineErrors.NotController;
@@ -104,9 +106,32 @@ fun onInternalMessage(in: InMessage) {
             throw TontineErrors.InvalidState;
 
         assert (storage.fundedBondCount == 0)
-            throw TontineErrors.InvalidState;
+            throw TontineErrors.BondAlreadyFunded;
 
-        storage.usdtWallet = msg.wallet;
+        assert (!config.circleWalletResolved)
+            throw TontineErrors.CircleWalletAlreadyResolved;
+
+        assert (!config.circleWalletLookupPending)
+            throw TontineErrors.CircleWalletLookupAlreadyPending;
+
+        val lookupMsg = createMessage({
+            bounce: BounceMode.Only256BitsOfBody,
+            value: grams("0.05"),
+            dest: config.usdtMaster,
+            body: RequestWalletAddress {
+                queryId: msg.queryId,
+                ownerAddress: contract.getAddress(),
+                includeOwnerAddress: true,
+            },
+        });
+
+        lookupMsg.send(SEND_MODE_REGULAR);
+
+        config.circleWalletLookupPending = true;
+        config.circleWalletQueryId = msg.queryId;
+
+        protocolState.jettonMasterConfig = config.toCell();
+        storage.protocolState = protocolState.toCell();
         storage.save();
 
         return;
@@ -121,10 +146,18 @@ fun onInternalMessage(in: InMessage) {
             lazy JettonTransferNotification.fromSlice(in.body);
 
         var storage = lazy TontineStorage.load();
+        val config = storage.protocolState.load().jettonMasterConfig.load();
+
+        // Le wallet USDT officiel doit impérativement avoir été résolu
+        assert (config.circleWalletResolved)
+            throw TontineErrors.CircleWalletNotResolved;
+
+        assert (storage.usdtWallet != null)
+            throw TontineErrors.CircleWalletNotResolved;
 
         // Seul le Jetton Wallet USDT officiel du cercle
         // peut notifier un transfert.
-        assert (in.senderAddress == storage.usdtWallet)
+        assert (in.senderAddress == storage.usdtWallet!)
             throw TontineErrors.UnauthorizedJettonWallet;
 
         assert (
@@ -274,7 +307,10 @@ fun onInternalMessage(in: InMessage) {
         assert (storage.state == 4)
             throw TontineErrors.InvalidState;
 
-        assert (msg.queryId > protocolState.lastOperationQueryId)
+        assert (protocolState.lastOperationQueryId < 18446744073709551615)
+            throw TontineErrors.QueryIdOverflow;
+
+        assert (msg.queryId == protocolState.lastOperationQueryId + 1)
             throw TontineErrors.ReplayedQueryId;
 
         assert (!payout.payoutPending)
@@ -454,7 +490,7 @@ fun onInternalMessage(in: InMessage) {
         var feeState =
             protocolState.feeState.load();
 
-        val config =
+        var config =
             protocolState.jettonMasterConfig.load();
 
         // ====================================================
@@ -464,6 +500,46 @@ fun onInternalMessage(in: InMessage) {
         assert (
             in.senderAddress == config.usdtMaster
         ) throw TontineErrors.UnauthorizedJettonWallet;
+
+
+        // ====================================================
+        // 0. WALLET JETTON DU CERCLE
+        // ====================================================
+
+        if (
+            !config.circleWalletResolved
+            && config.circleWalletLookupPending
+        ) {
+            assert (
+                msg.queryId == config.circleWalletQueryId
+            ) throw TontineErrors.CircleWalletQueryMismatch;
+
+            assert (
+                msg.ownerAddress != null
+            ) throw TontineErrors.JettonWalletOwnerMismatch;
+
+            assert (
+                msg.ownerAddress!.load()
+                == contract.getAddress()
+            ) throw TontineErrors.JettonWalletOwnerMismatch;
+
+            assert (
+                msg.jettonWalletAddress != null
+            ) throw TontineErrors.WalletNotResolved;
+
+            storage.usdtWallet = msg.jettonWalletAddress;
+            config.circleWalletResolved = true;
+            config.circleWalletLookupPending = false;
+
+            protocolState.jettonMasterConfig =
+                config.toCell();
+
+            storage.protocolState =
+                protocolState.toCell();
+
+            storage.save();
+            return;
+        }
 
 
         // ====================================================
@@ -651,10 +727,14 @@ fun onInternalMessage(in: InMessage) {
             forwardPayload,
         };
 
+        val config = storage.protocolState.load().jettonMasterConfig.load();
+        assert (config.circleWalletResolved && storage.usdtWallet != null)
+            throw TontineErrors.CircleWalletNotResolved;
+
         val outgoing = createMessage({
             bounce: BounceMode.Only256BitsOfBody,
             value: 0,
-            dest: storage.usdtWallet,
+            dest: storage.usdtWallet!,
             body: transferMsg,
         });
 
@@ -974,13 +1054,16 @@ fun onInternalMessage(in: InMessage) {
         assert (!settlement.settlementPending)
             throw TontineErrors.SettlementAlreadyPending;
 
-        assert (msg.queryId > protocolState.lastOperationQueryId)
-            throw TontineErrors.ReplayedQueryId;
-
         var member = storage.members.mustGet(
             in.senderAddress,
             TontineErrors.MemberNotFound
         );
+
+        assert (protocolState.lastOperationQueryId < 18446744073709551615)
+            throw TontineErrors.QueryIdOverflow;
+
+        assert (msg.queryId == protocolState.lastOperationQueryId + 1)
+            throw TontineErrors.ReplayedQueryId;
 
         // Toutes les obligations du membre doivent être terminées.
         assert (member.remainingDebt == 0)
@@ -1180,10 +1263,14 @@ fun onInternalMessage(in: InMessage) {
             forwardPayload,
         };
 
+        val config = protocolState.jettonMasterConfig.load();
+        assert (config.circleWalletResolved && storage.usdtWallet != null)
+            throw TontineErrors.CircleWalletNotResolved;
+
         val outgoing = createMessage({
             bounce: BounceMode.Only256BitsOfBody,
             value: 0,
-            dest: storage.usdtWallet,
+            dest: storage.usdtWallet!,
             body: transferMsg,
         });
 
@@ -1252,9 +1339,6 @@ fun onInternalMessage(in: InMessage) {
         assert (!feeState.withdrawalPending)
             throw TontineErrors.ProtocolFeeWithdrawalAlreadyPending;
 
-        assert (msg.queryId > protocolState.lastOperationQueryId)
-            throw TontineErrors.ReplayedQueryId;
-
         // V1 : sérialisation avec les settlements membres.
         assert (!settlement.settlementPending)
             throw TontineErrors.ProtocolFeeOperationConflict;
@@ -1269,6 +1353,12 @@ fun onInternalMessage(in: InMessage) {
 
         assert (payout.protocolFeesAccrued > 0)
             throw TontineErrors.ProtocolFeeNothingToWithdraw;
+
+        assert (protocolState.lastOperationQueryId < 18446744073709551615)
+            throw TontineErrors.QueryIdOverflow;
+
+        assert (msg.queryId == protocolState.lastOperationQueryId + 1)
+            throw TontineErrors.ReplayedQueryId;
 
         // ------------------------------------------------------
         // Figer le montant AVANT résolution du wallet.
@@ -1383,10 +1473,13 @@ fun onInternalMessage(in: InMessage) {
             forwardPayload,
         };
 
+        assert (config.circleWalletResolved && storage.usdtWallet != null)
+            throw TontineErrors.CircleWalletNotResolved;
+
         val outgoing = createMessage({
             bounce: BounceMode.Only256BitsOfBody,
             value: 0,
-            dest: storage.usdtWallet,
+            dest: storage.usdtWallet!,
             body: transferMsg,
         });
 
@@ -1616,38 +1709,82 @@ get fun currentNetPayout(): uint64 {
 
 
 fun onBouncedMessage(in: InMessageBounced) {
+    if (in.bouncedBody.remainingBitsCount() < 32) {
+        return;
+    }
+
     var storage = lazy TontineStorage.load();
-    val config = storage.protocolState.load().jettonMasterConfig.load();
+    var protocolState = storage.protocolState.load();
+    val config = protocolState.jettonMasterConfig.load();
+
+    // Authentification de l'expéditeur du rebond en amont :
+    // seuls le wallet Jetton USDT du cercle et le Jetton Master sont autorisés.
+    // Tout rebond provenant d'un tiers est immédiatement ignoré.
+    val isCircleWallet = (storage.usdtWallet != null && in.senderAddress == storage.usdtWallet!);
+    val isMaster = (in.senderAddress == config.usdtMaster);
+    if (!isCircleWallet && !isMaster) {
+        return;
+    }
+
+    var bounceBody = in.bouncedBody;
+    val bouncePrefix = bounceBody.preloadUint(32);
+
+    var origSlice = bounceBody;
+
+    if (bouncePrefix == 0xffffffff) {
+        // Standard TVM 256-bit bounce
+        // Le protocole utilise BounceMode.Only256BitsOfBody sur ses messages sortants.
+        bounceBody.skipBouncedPrefix();
+        origSlice = bounceBody;
+    } else if (bouncePrefix == 0xfffffffe) {
+        // TVM 12 RichBounce format (compatibilité entrante / robustesse future).
+        // Le contrat n'émet aucun message en mode RichBounce.
+        // Vérification défensive de la présence de la référence de l'originalBody
+        // pour écarter tout risque de Cell Underflow sur un fragment malformé.
+        if (bounceBody.remainingRefsCount() < 1) {
+            return;
+        }
+        val rich = lazy RichBounceBody.fromSlice(bounceBody);
+        origSlice = rich.originalBody.beginParse();
+    } else {
+        return;
+    }
 
     // ========================================================
-    // 1. Bounce du payout Jetton
+    // 1. Bounce du transfert Jetton (AskToTransfer)
     // ========================================================
-    if (in.senderAddress == storage.usdtWallet) {
-        if (in.bouncedBody.remainingBitsCount() < 32) {
+    if (storage.usdtWallet != null && in.senderAddress == storage.usdtWallet!) {
+        // AskToTransfer requiert au minimum : opcode (32 bits), queryId (64 bits),
+        // et le préfixe de longueur VarUInteger 16 (4 bits), soit 100 bits.
+        if (origSlice.remainingBitsCount() < 100) {
             return;
         }
 
-        in.bouncedBody.skipBouncedPrefix();
+        val op = origSlice.loadUint(32);
+        if (op != 0x0f8a7ea5) {
+            return;
+        }
 
-        val bouncedTransfer =
-            lazy BouncedAskToTransfer.fromSlice(
-                in.bouncedBody
-            );
+        val bouncedQueryId = origSlice.loadUint(64);
+
+        // Validation explicite du format TL-B de VarUInteger 16 pour éviter
+        // tout Cell Underflow sur un fragment malformé.
+        val coinsByteLen = origSlice.preloadUint(4);
+        val neededCoinsBits = 4 + (coinsByteLen * 8);
+        if (origSlice.remainingBitsCount() < neededCoinsBits) {
+            return;
+        }
+
+        val bouncedAmount = origSlice.loadCoins();
 
         var payout =
             storage.payout.load();
-
-        var protocolState =
-            storage.protocolState.load();
 
         var settlement =
             protocolState.settlement.load();
 
         var feeState =
             protocolState.feeState.load();
-
-        val config =
-            protocolState.jettonMasterConfig.load();
 
         // ====================================================
         // A. BOUNCE PAYOUT DE ROUND
@@ -1656,10 +1793,8 @@ fun onBouncedMessage(in: InMessageBounced) {
         if (
             payout.payoutPending
             && payout.payoutDispatched
-            && bouncedTransfer.queryId
-                == payout.pendingPayoutQueryId
-            && bouncedTransfer.jettonAmount
-                == (payout.pendingPayoutAmount as coins)
+            && bouncedQueryId == payout.pendingPayoutQueryId
+            && bouncedAmount == (payout.pendingPayoutAmount as coins)
         ) {
             payout.payoutDispatched = false;
             payout.payoutDispatchedAt = 0;
@@ -1678,10 +1813,8 @@ fun onBouncedMessage(in: InMessageBounced) {
         if (
             settlement.settlementPending
             && settlement.settlementDispatched
-            && bouncedTransfer.queryId
-                == settlement.queryId
-            && bouncedTransfer.jettonAmount
-                == (settlement.amount as coins)
+            && bouncedQueryId == settlement.queryId
+            && bouncedAmount == (settlement.amount as coins)
         ) {
             settlement.settlementDispatched = false;
             settlement.settlementDispatchedAt = 0;
@@ -1703,14 +1836,9 @@ fun onBouncedMessage(in: InMessageBounced) {
         if (
             feeState.withdrawalPending
             && feeState.withdrawalDispatched
-            && bouncedTransfer.queryId
-                == feeState.queryId
-            && bouncedTransfer.jettonAmount
-                == (feeState.amount as coins)
+            && bouncedQueryId == feeState.queryId
+            && bouncedAmount == (feeState.amount as coins)
         ) {
-            // Le transfert n'a pas abouti.
-            // Les 50 USDT restent entièrement dus
-            // et peuvent être redispatchés.
             feeState.withdrawalDispatched = false;
             feeState.withdrawalDispatchedAt = 0;
 
@@ -1731,22 +1859,42 @@ fun onBouncedMessage(in: InMessageBounced) {
     // 2. Bounce de RequestWalletAddress vers le Master USDT
     // ========================================================
     if (in.senderAddress == config.usdtMaster) {
-        if (in.bouncedBody.remainingBitsCount() < 32) {
+        // RequestWalletAddress requiert au minimum : opcode (32 bits) + queryId (64 bits) = 96 bits.
+        if (origSlice.remainingBitsCount() < 96) {
             return;
         }
 
-        in.bouncedBody.skipBouncedPrefix();
+        val op = origSlice.loadUint(32);
+        if (op != 0x2c76b973) {
+            return;
+        }
 
-        val bouncedLookup =
-            lazy BouncedRequestWalletAddress.fromSlice(
-                in.bouncedBody
-            );
+        val bouncedQueryId = origSlice.loadUint(64);
+
+        // ====================================================
+        // 0. BOUNCE LOOKUP WALLET DU CERCLE
+        // ====================================================
+
+        if (
+            !config.circleWalletResolved
+            && config.circleWalletLookupPending
+            && bouncedQueryId == config.circleWalletQueryId
+        ) {
+            var mutableConfig = config;
+            mutableConfig.circleWalletLookupPending = false;
+
+            protocolState.jettonMasterConfig =
+                mutableConfig.toCell();
+
+            storage.protocolState =
+                protocolState.toCell();
+
+            storage.save();
+            return;
+        }
 
         var payout =
             storage.payout.load();
-
-        var protocolState =
-            storage.protocolState.load();
 
         var settlement =
             protocolState.settlement.load();
@@ -1761,8 +1909,7 @@ fun onBouncedMessage(in: InMessageBounced) {
         if (
             payout.payoutPending
             && payout.beneficiaryWalletLookupPending
-            && bouncedLookup.queryId
-                == payout.pendingPayoutQueryId
+            && bouncedQueryId == payout.pendingPayoutQueryId
         ) {
             payout.beneficiaryWalletLookupPending =
                 false;
@@ -1781,8 +1928,7 @@ fun onBouncedMessage(in: InMessageBounced) {
         if (
             settlement.settlementPending
             && settlement.walletLookupPending
-            && bouncedLookup.queryId
-                == settlement.queryId
+            && bouncedQueryId == settlement.queryId
         ) {
             settlement.walletLookupPending =
                 false;
@@ -1804,8 +1950,7 @@ fun onBouncedMessage(in: InMessageBounced) {
         if (
             feeState.withdrawalPending
             && feeState.walletLookupPending
-            && bouncedLookup.queryId
-                == feeState.queryId
+            && bouncedQueryId == feeState.queryId
         ) {
             feeState.walletLookupPending =
                 false;
@@ -1823,7 +1968,7 @@ fun onBouncedMessage(in: InMessageBounced) {
         return;
     }
 
-    throw TontineErrors.UnauthorizedJettonWallet;
+    return;
 }
 
 get fun settlementPending(): bool {
@@ -2358,4 +2503,24 @@ get fun lastOperationQueryId(): uint64 {
     return storage.protocolState.load().lastOperationQueryId;
 }
 
+get fun circleJettonWalletResolved(): bool {
+    val storage = lazy TontineStorage.load();
+    val config = storage.protocolState.load().jettonMasterConfig.load();
+    return config.circleWalletResolved;
+}
 
+get fun circleJettonWalletLookupPending(): bool {
+    val storage = lazy TontineStorage.load();
+    val config = storage.protocolState.load().jettonMasterConfig.load();
+    return config.circleWalletLookupPending;
+}
+
+get fun circleJettonWallet(): address {
+    val storage = lazy TontineStorage.load();
+    val config = storage.protocolState.load().jettonMasterConfig.load();
+    assert (config.circleWalletResolved)
+        throw TontineErrors.CircleWalletNotResolved;
+    assert (storage.usdtWallet != null)
+        throw TontineErrors.CircleWalletNotResolved;
+    return storage.usdtWallet!;
+}

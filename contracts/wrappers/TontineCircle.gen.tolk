@@ -319,3 +319,15 @@ fun TontineCircle.memberStatus(self, wallet: address): uint8 {
 fun TontineCircle.lastOperationQueryId(self): uint64 {
     return net.runGetMethod(self.address, "lastOperationQueryId");
 }
+
+fun TontineCircle.circleJettonWalletResolved(self): bool {
+    return net.runGetMethod(self.address, "circleJettonWalletResolved");
+}
+
+fun TontineCircle.circleJettonWalletLookupPending(self): bool {
+    return net.runGetMethod(self.address, "circleJettonWalletLookupPending");
+}
+
+fun TontineCircle.circleJettonWallet(self): address {
+    return net.runGetMethod(self.address, "circleJettonWallet");
+}
