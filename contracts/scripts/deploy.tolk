@@ -7,6 +7,7 @@ import "@acton/emulation/scripts"
 import "@wrappers/TontineCircle.gen"
 import "../tontineStorage"
 import "../tontineTypes"
+import "deployGuards"
 
 fun main() {
     // 1. Charger le wallet deployer / controller
@@ -22,7 +23,7 @@ fun main() {
     if (circleIdInt == null) {
         circleIdInt = promptInt("Enter Circle ID (uint64):", "1");
     }
-    if (circleIdInt! < 0 || circleIdInt! > 18446744073709551615) {
+    if (!validateCircleId(circleIdInt!)) {
         println("ERROR: Circle ID is outside the valid uint64 range [0, 2^64-1].");
         return;
     }
@@ -34,7 +35,7 @@ fun main() {
         usdtMaster = promptAddress("Enter USDT Master address:");
     }
     val masterWc = usdtMaster!.getWorkchain();
-    if (masterWc != 0 && masterWc != -1) {
+    if (!validateWorkchain(masterWc)) {
         println("ERROR: Invalid workchain for USDT Master address.");
         return;
     }
@@ -45,7 +46,7 @@ fun main() {
         protocolTreasury = promptAddress("Enter Protocol Treasury address:");
     }
     val treasuryWc = protocolTreasury!.getWorkchain();
-    if (treasuryWc != 0 && treasuryWc != -1) {
+    if (!validateWorkchain(treasuryWc)) {
         println("ERROR: Invalid workchain for Protocol Treasury address.");
         return;
     }
@@ -73,18 +74,58 @@ fun main() {
     println("Broadcasting Mode:     {}", net.isBroadcasting());
     println("============================================================");
 
-    // 8. Déployer
+    // 8. Barrières de sécurité strictes en cas de broadcast réel
+    if (net.isBroadcasting()) {
+        // Barrière A: Variable d'acquittement explicite obligatoire (opt-in phrase)
+        val authValue = env<string>("TONTINE_ALLOW_TESTNET_BROADCAST");
+        if (!isBroadcastOptInAcknowledged(authValue)) {
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            println("DEPLOYMENT ABORTED: Missing or invalid broadcast acknowledgement.");
+            println("To broadcast on Testnet, you must explicitly set:");
+            println("TONTINE_ALLOW_TESTNET_BROADCAST=\"{}\"", BROADCAST_OPT_IN_ACK_VALUE);
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            return;
+        }
+
+        // Barrière B: Récapitulatif solennel avant émission
+        println("************************************************************");
+        println("PRE-BROADCAST SAFETY BARRIER");
+        println("************************************************************");
+        println("REAL BROADCAST:         YES");
+        println("EXPECTED NETWORK:       TESTNET");
+        println("Controller:             {}", controller);
+        println("Circle ID:              {}", circleId);
+        println("Jetton Master:          {}", usdtMaster!);
+        println("Protocol Treasury:      {}", protocolTreasury!);
+        println("Calculated Address:     {}", contract.address);
+        println("Value Sent:             0.1 TON");
+        println("REMINDER: Verify all parameters off-chain before confirming.");
+        println("************************************************************");
+
+        // Barrière C: Confirmation interactive obligatoire avec défaut false
+        val userConfirmed = confirm(
+            "CONFIRM BROADCAST: Send real transaction to TESTNET?",
+            false,
+            "This will broadcast a real transaction to the network. Default is NO (false)."
+        );
+        if (!userConfirmed) {
+            println("DEPLOYMENT ABORTED: Confirmation rejected or non-interactive default.");
+            return;
+        }
+    }
+
+    // 9. Déployer
     println("Deploying TontineCircle with 0.1 TON initial balance...");
     val deployResult = contract.deploy(deployer.address, { value: grams("0.1") });
 
-    // 9. Attendre la première transaction
+    // 10. Attendre la première transaction
     val tx = deployResult.waitForFirstTransaction();
     if (tx == null) {
         println("Deployment aborted: no transaction observed.");
         return;
     }
 
-    // 10. Afficher le résultat et vérifier les getters post-déploiement
+    // 11. Afficher le résultat et vérifier les getters post-déploiement
     println("Contract successfully deployed at {}", contract.address);
     println("--- Verifying Initial Canonical State via Getters ---");
 
